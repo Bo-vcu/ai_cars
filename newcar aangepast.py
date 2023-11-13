@@ -154,7 +154,9 @@ class Car:
         return rotated_image
 
 
+mapId = 2
 def run_simulation(genomes, config):
+    global mapId
     
     # Empty Collections For Nets and Cars
     nets = []
@@ -177,7 +179,7 @@ def run_simulation(genomes, config):
     clock = pygame.time.Clock()
     generation_font = pygame.font.SysFont("Arial", 30)
     alive_font = pygame.font.SysFont("Arial", 20)
-    game_map = pygame.image.load('map2.png').convert() # Convert Speeds Up A Lot
+    game_map = pygame.image.load(f'map{mapId}.png').convert() # Convert Speeds Up A Lot
 
     global current_generation
     current_generation += 1
@@ -185,7 +187,20 @@ def run_simulation(genomes, config):
     # Simple Counter To Roughly Limit Time (Not Good Practice)
     counter = 0
 
+
+
+
+
     while True:
+        
+        for car in cars:
+            
+            if car.is_alive() and car.get_reward()%10 == 0:
+                #print('reward: ', car.get_reward())
+                if car.get_reward() > 500 and mapId < 5:
+                    mapId+=1
+                    return
+
         # Exit On Quit Event
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -258,7 +273,7 @@ if __name__ == "__main__":
     population.add_reporter(stats)
     
     # Run Simulation For A Maximum of 1000 Generations
-    population.run(run_simulation, 30)
+    population.run(run_simulation, 10000)
 
     print('done')
     
