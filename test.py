@@ -70,7 +70,13 @@ class Car:
         y = int(self.center[1] + math.sin(math.radians(360 - (self.angle + degree))) * length)
 
         # While We Don't Hit BORDER_COLOR AND length < 300 (just a max) -> go further and further
-        while not game_map.get_at((x, y)) == BORDER_COLOR and length < 300:
+        while (
+            0 <= x < game_map.get_width()
+            and 0 <= y < game_map.get_height()
+            and not game_map.get_at((x, y)) == BORDER_COLOR
+            and length < 300
+        ):
+        # while not game_map.get_at((x, y)) == BORDER_COLOR and length < 300:
             length = length + 1
             x = int(self.center[0] + math.cos(math.radians(360 - (self.angle + degree))) * length)
             y = int(self.center[1] + math.sin(math.radians(360 - (self.angle + degree))) * length)
