@@ -24,8 +24,11 @@ BORDER_COLOR = (255, 255, 255, 255) # Color To Crash on Hit
 current_generation = 0 # Generation counter
 
 
-# endPos = [400, 400]
-endPos = [400, 700]
+
+indexEndPos = 0
+training_endPos = [[900 , 250], [400, 700]]
+endPos = training_endPos[0]
+# endPos = [400, 700]
 endPointImage = pygame.image.load('endpoint.png')
 
 
@@ -53,6 +56,7 @@ class Car:
 
         self.distance = 0 # Distance Driven
         self.time = 0 # Time Passed
+        self.reached = False
 
     def draw(self, screen):
         screen.blit(self.rotated_sprite, self.position) # Draw Sprite
@@ -96,18 +100,20 @@ class Car:
     
     def update(self, game_map):
 
-
         x = math.pow(self.center[0]-endPos[0],2)
         y = math.pow(self.center[1]-endPos[1],2)
-
+        # print(endPos)
         if(math.sqrt(x + y) <= 50):
             self.speed = 0
             self.speed_set = True
+            self.reached = True
+
+
 
         # Set The Speed To 20 For The First Time
         # Only When Having 4 Output Nodes With Speed Up and Down
         if not self.speed_set:
-            self.speed = 20
+            self.speed = 10
             self.speed_set = True
 
         # Get Rotated Sprite And Move Into The Right X-Direction
@@ -152,6 +158,10 @@ class Car:
         # Get Distances To Border
         radars = self.radars
         return_values = [0, 0, 0, 0, 0]
+
+        return_values.append(endPos[0])
+        return_values.append(endPos[1])
+
         for i, radar in enumerate(radars):
             return_values[i] = int(radar[1] / 30)
 
@@ -168,12 +178,12 @@ class Car:
         y = math.pow(self.center[1]-endPos[1],2)
 
         close = 1/math.sqrt(x + y) 
+        reach_rew = 0
+        if self.reached:
+            reach_rew = 10000
 
-        alive_rew = 0
-        if not self.is_alive():
-            alive_rew = -50
-        print(close*10000 - (self.distance/1000) + alive_rew)
-        return close*10000 - (self.distance/10) + alive_rew
+        # print(close*1000000 - (self.distance*2) + reach_rew)
+        return close*1000000 - (self.distance*2) + reach_rew
         #return self.distance / (CAR_SIZE_X / 2) + alive_rew
 
     def rotate_center(self, image, angle):
@@ -187,7 +197,16 @@ class Car:
 
 
 def run_simulation(genomes, config):
+    global indexEndPos
+    global training_endPos
+
+    indexEndPos += 1
+    if indexEndPos > 1:
+        indexEndPos = 0
+    global endPos
+    endPos = training_endPos[indexEndPos]
     
+
     # Empty Collections For Nets and Cars
     nets = []
     cars = []
@@ -222,7 +241,6 @@ def run_simulation(genomes, config):
 
 
     while True:
-        
 
         # Exit On Quit Event
         for event in pygame.event.get():
