@@ -32,7 +32,7 @@ class Car:
         self.rotated_sprite = self.sprite 
 
         # self.position = [690, 740] # Starting Position
-        self.position = [830, 920] # Starting Position
+        self.position = [1200, 750] # Starting Position
         self.angle = 0
         self.speed = 0
 
@@ -74,7 +74,12 @@ class Car:
         y = int(self.center[1] + math.sin(math.radians(360 - (self.angle + degree))) * length)
 
         # While We Don't Hit BORDER_COLOR AND length < 300 (just a max) -> go further and further
-        while not game_map.get_at((x, y)) == BORDER_COLOR and length < 300:
+        while (
+            0 <= x < game_map.get_width()
+            and 0 <= y < game_map.get_height()
+            and not game_map.get_at((x, y)) == BORDER_COLOR
+            and length < 300
+        ):
             length = length + 1
             x = int(self.center[0] + math.cos(math.radians(360 - (self.angle + degree))) * length)
             y = int(self.center[1] + math.sin(math.radians(360 - (self.angle + degree))) * length)
@@ -154,9 +159,7 @@ class Car:
         return rotated_image
 
 
-mapId = 2
 def run_simulation(genomes, config):
-    global mapId
     
     # Empty Collections For Nets and Cars
     nets = []
@@ -179,7 +182,7 @@ def run_simulation(genomes, config):
     clock = pygame.time.Clock()
     generation_font = pygame.font.SysFont("Arial", 30)
     alive_font = pygame.font.SysFont("Arial", 20)
-    game_map = pygame.image.load(f'map{mapId}.png').convert() # Convert Speeds Up A Lot
+    game_map = pygame.image.load('testCity.png').convert() # Convert Speeds Up A Lot
 
     global current_generation
     current_generation += 1
@@ -193,13 +196,6 @@ def run_simulation(genomes, config):
 
     while True:
         
-        for car in cars:
-            
-            if car.is_alive() and car.get_reward()%10 == 0:
-                #print('reward: ', car.get_reward())
-                if car.get_reward() > 500 and mapId < 5:
-                    mapId+=1
-                    return
 
         # Exit On Quit Event
         for event in pygame.event.get():
@@ -273,7 +269,7 @@ if __name__ == "__main__":
     population.add_reporter(stats)
     
     # Run Simulation For A Maximum of 1000 Generations
-    population.run(run_simulation, 10000)
+    population.run(run_simulation, 200)
 
     print('done')
     
