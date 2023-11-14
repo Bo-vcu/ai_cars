@@ -5,6 +5,8 @@ import math
 import random
 import sys
 import os
+from matplotlib import pyplot as plt
+import matplotlib
 
 import neat
 import pygame
@@ -36,6 +38,7 @@ class Car:
         self.sprite = pygame.image.load('car.png').convert() # Convert Speeds Up A Lot
         self.sprite = pygame.transform.scale(self.sprite, (CAR_SIZE_X, CAR_SIZE_Y))
         self.rotated_sprite = self.sprite 
+        self.initial_distance = 0
 
         # self.position = [690, 740] # Starting Position
         self.position = [1200, 750] # Starting Position
@@ -104,6 +107,10 @@ class Car:
             self.speed = 0
             self.speed_set = True
 
+        # Calculate the initial distance between the car and endPoint during the first update
+        if self.initial_distance == 0:
+            self.initial_distance = math.sqrt((self.center[0] - endPoint[0])**2 + (self.center[1] - endPoint[1])**2)
+
         # Set The Speed To 20 For The First Time
         # Only When Having 4 Output Nodes With Speed Up and Down
         if not self.speed_set:
@@ -162,13 +169,13 @@ class Car:
         return self.alive
 
     def get_reward(self):
-        # Calculate Reward based on distance to the endPoint
-        #max_dist = form voor max dist 
+        # Calculate the Euclidean distance to the endPoint
         distance_to_end_point = math.sqrt((self.center[0] - endPoint[0])**2 + (self.center[1] - endPoint[1])**2)
         
-        return max(0, 
-                   #replace door max distance
-                   1000 - distance_to_end_point)
+         # The maximum distance is the initial distance between the car and the endPoint
+        max_distance = self.initial_distance
+
+        return max(0, max_distance - distance_to_end_point)
 
 
 
@@ -183,8 +190,9 @@ class Car:
         rotated_image = rotated_image.subsurface(rotated_rectangle).copy()
         return rotated_image
 
-
+avg_fitness_history = []
 def run_simulation(genomes, config):
+    global avg_fitness_history
     
     # Empty Collections For Nets and Cars
     nets = []
@@ -276,6 +284,16 @@ def run_simulation(genomes, config):
         screen.blit(endPointImage, endPoint)
         pygame.display.flip()
         clock.tick(60) # 60 FPS
+
+    avg_fitness = sum(g[1].fitness for g in genomes) / len(genomes)
+    avg_fitness_history.append(avg_fitness)
+    plt.ion()  # Turn on interactive mode
+    plt.plot(range(1, len(avg_fitness_history) + 1), avg_fitness_history)  # Start x-axis from 1
+    plt.xlabel('Generation')
+    plt.ylabel('Average fitness')
+    plt.title('Reward History')
+    plt.draw()  # Draw the plot
+    plt.pause(0.001)  # Add a small pause to give the plot time to update 
 
 if __name__ == "__main__":
     
