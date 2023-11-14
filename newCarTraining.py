@@ -23,6 +23,12 @@ BORDER_COLOR = (255, 255, 255, 255) # Color To Crash on Hit
 
 current_generation = 0 # Generation counter
 
+
+# endPos = [400, 400]
+endPos = [400, 700]
+endPointImage = pygame.image.load('endpoint.png')
+
+
 class Car:
 
     def __init__(self):
@@ -60,7 +66,7 @@ class Car:
             pygame.draw.circle(screen, (0, 255, 0), position, 5)
 
     def check_collision(self, game_map):
-        self.alive = True
+        #self.alive = True
         for point in self.corners:
             # If Any Corner Touches Border Color -> Crash
             # Assumes Rectangle
@@ -89,6 +95,15 @@ class Car:
         self.radars.append([(x, y), dist])
     
     def update(self, game_map):
+
+
+        x = math.pow(self.center[0]-endPos[0],2)
+        y = math.pow(self.center[1]-endPos[1],2)
+
+        if(math.sqrt(x + y) <= 50):
+            self.speed = 0
+            self.speed_set = True
+
         # Set The Speed To 20 For The First Time
         # Only When Having 4 Output Nodes With Speed Up and Down
         if not self.speed_set:
@@ -106,6 +121,8 @@ class Car:
         self.distance += self.speed
         self.time += 1
         
+        if self.time > 200:
+            self.alive = False
         # Same For Y-Position
         self.position[1] += math.sin(math.radians(360 - self.angle)) * self.speed
         self.position[1] = max(self.position[1], 20)
@@ -147,7 +164,17 @@ class Car:
     def get_reward(self):
         # Calculate Reward (Maybe Change?)
         # return self.distance / 50.0
-        return self.distance / (CAR_SIZE_X / 2)
+        x = math.pow(self.center[0]-endPos[0],2)
+        y = math.pow(self.center[1]-endPos[1],2)
+
+        close = 1/math.sqrt(x + y) 
+
+        alive_rew = 0
+        if not self.is_alive():
+            alive_rew = -50
+        print(close*10000 - (self.distance/1000) + alive_rew)
+        return close*10000 - (self.distance/10) + alive_rew
+        #return self.distance / (CAR_SIZE_X / 2) + alive_rew
 
     def rotate_center(self, image, angle):
         # Rotate The Rectangle
@@ -248,7 +275,7 @@ def run_simulation(genomes, config):
         text_rect = text.get_rect()
         text_rect.center = (900, 490)
         screen.blit(text, text_rect)
-
+        screen.blit(endPointImage, endPos)
         pygame.display.flip()
         clock.tick(60) # 60 FPS
 
@@ -269,7 +296,7 @@ if __name__ == "__main__":
     population.add_reporter(stats)
     
     # Run Simulation For A Maximum of 1000 Generations
-    population.run(run_simulation, 200)
+    population.run(run_simulation, 2000)
 
     print('done')
     
