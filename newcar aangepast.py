@@ -1,18 +1,13 @@
 # This Code is Heavily Inspired By The YouTuber: Cheesy AI
 # Code Changed, Optimized And Commented By: NeuralNine (Florian Dedov)
-
 import math
 import random
 import sys
 import os
-
+import pickle
 import neat
 import pygame
 import matplotlib.pyplot as plt
-
-# Constants
-# WIDTH = 1600
-# HEIGHT = 880
 
 WIDTH = 1920
 HEIGHT = 1080
@@ -54,11 +49,15 @@ class Car:
         self.draw_radar(screen) #OPTIONAL FOR SENSORS
 
     def draw_radar(self, screen):
-        # Optionally Draw All Sensors / Radars
+        # Clear previous radars
+        self.drawing_radars = []
+        # Draw new radars
         for radar in self.radars:
             position = radar[0]
             pygame.draw.line(screen, (0, 255, 0), self.center, position, 1)
             pygame.draw.circle(screen, (0, 255, 0), position, 5)
+            self.drawing_radars.append((self.center, position))
+
 
     def check_collision(self, game_map):
         self.alive = True
@@ -154,10 +153,11 @@ class Car:
         rotated_image = rotated_image.subsurface(rotated_rectangle).copy()
         return rotated_image
 
-
 mapId = 2
+avg_fitness_history = []
 def run_simulation(genomes, config):
     global mapId
+    global avg_fitness_history
     
     # Empty Collections For Nets and Cars
     nets = []
@@ -188,10 +188,6 @@ def run_simulation(genomes, config):
 
     # Simple Counter To Roughly Limit Time (Not Good Practice)
     counter = 0
-
-
-
-
 
     while True:
         
@@ -259,15 +255,16 @@ def run_simulation(genomes, config):
 
         pygame.display.flip()
         clock.tick(60) # 60 FPS
-    
-    plt.plot(reward_history)
-    plt.xlabel('Time Step')
-    plt.ylabel('Reward')
+
+    avg_fitness = sum(g[1].fitness for g in genomes) / len(genomes)
+    avg_fitness_history.append(avg_fitness)
+    plt.plot(range(1, len(avg_fitness_history) + 1), avg_fitness_history)  # Start x-axis from 1
+    plt.xlabel('Generation')
+    plt.ylabel('Average fitness')
     plt.title('Reward History')
     plt.show()
 
 if __name__ == "__main__":
-    
     # Load Config
     config_path = "./config.txt"
     config = neat.config.Config(neat.DefaultGenome,
@@ -289,8 +286,6 @@ if __name__ == "__main__":
     
     best_genome = stats.best_genome()
     best_network = neat.nn.FeedForwardNetwork.create(best_genome, config)
-
-    import pickle
 
     # Save the best network and genome separately
     with open("neat_best_genome.pkl", 'wb') as output_file:
