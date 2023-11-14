@@ -24,8 +24,8 @@ BORDER_COLOR = (255, 255, 255, 255) # Color To Crash on Hit
 current_generation = 0 # Generation counter
 
 
-# endPos = [400, 400]
-endPos = [400, 700]
+# endPoint = [400, 400]
+endPoint = [410, 390]
 endPointImage = pygame.image.load('endpoint.png')
 
 
@@ -97,17 +97,17 @@ class Car:
     def update(self, game_map):
 
 
-        x = math.pow(self.center[0]-endPos[0],2)
-        y = math.pow(self.center[1]-endPos[1],2)
+        x = math.pow(self.center[0]-endPoint[0],2)
+        y = math.pow(self.center[1]-endPoint[1],2)
 
-        if(math.sqrt(x + y) <= 50):
+        if(math.sqrt(x + y) <= 80):
             self.speed = 0
             self.speed_set = True
 
         # Set The Speed To 20 For The First Time
         # Only When Having 4 Output Nodes With Speed Up and Down
         if not self.speed_set:
-            self.speed = 20
+            self.speed = 10
             self.speed_set = True
 
         # Get Rotated Sprite And Move Into The Right X-Direction
@@ -162,19 +162,17 @@ class Car:
         return self.alive
 
     def get_reward(self):
-        # Calculate Reward (Maybe Change?)
-        # return self.distance / 50.0
-        x = math.pow(self.center[0]-endPos[0],2)
-        y = math.pow(self.center[1]-endPos[1],2)
+        # Calculate Reward based on distance to the endPoint
+        #max_dist = form voor max dist 
+        distance_to_end_point = math.sqrt((self.center[0] - endPoint[0])**2 + (self.center[1] - endPoint[1])**2)
+        
+        return max(0, 
+                   #replace door max distance
+                   1000 - distance_to_end_point)
 
-        close = 1/math.sqrt(x + y) 
 
-        alive_rew = 0
-        if not self.is_alive():
-            alive_rew = -50
-        print(close*10000 - (self.distance/1000) + alive_rew)
-        return close*10000 - (self.distance/10) + alive_rew
-        #return self.distance / (CAR_SIZE_X / 2) + alive_rew
+
+
 
     def rotate_center(self, image, angle):
         # Rotate The Rectangle
@@ -268,14 +266,14 @@ def run_simulation(genomes, config):
         # Display Info
         text = generation_font.render("Generation: " + str(current_generation), True, (0,0,0))
         text_rect = text.get_rect()
-        text_rect.center = (900, 450)
+        text_rect.center = (450, 920)
         screen.blit(text, text_rect)
 
         text = alive_font.render("Still Alive: " + str(still_alive), True, (0, 0, 0))
         text_rect = text.get_rect()
-        text_rect.center = (900, 490)
+        text_rect.center = (450, 900)
         screen.blit(text, text_rect)
-        screen.blit(endPointImage, endPos)
+        screen.blit(endPointImage, endPoint)
         pygame.display.flip()
         clock.tick(60) # 60 FPS
 
