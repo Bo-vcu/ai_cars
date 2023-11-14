@@ -8,6 +8,7 @@ import os
 
 import neat
 import pygame
+import matplotlib.pyplot as plt
 
 # Constants
 # WIDTH = 1600
@@ -161,6 +162,7 @@ def run_simulation(genomes, config):
     # Empty Collections For Nets and Cars
     nets = []
     cars = []
+    reward_history = []
 
     # Initialize PyGame And The Display
     pygame.init()
@@ -196,6 +198,8 @@ def run_simulation(genomes, config):
         for car in cars:
             
             if car.is_alive() and car.get_reward()%10 == 0:
+                reward = car.get_reward()
+                reward_history.append(reward)
                 #print('reward: ', car.get_reward())
                 if car.get_reward() > 500 and mapId < 5:
                     mapId+=1
@@ -255,6 +259,12 @@ def run_simulation(genomes, config):
 
         pygame.display.flip()
         clock.tick(60) # 60 FPS
+    
+    plt.plot(reward_history)
+    plt.xlabel('Time Step')
+    plt.ylabel('Reward')
+    plt.title('Reward History')
+    plt.show()
 
 if __name__ == "__main__":
     
