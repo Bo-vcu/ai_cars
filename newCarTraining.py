@@ -12,9 +12,11 @@ import pygame
 # Constants
 # WIDTH = 1600
 # HEIGHT = 880
+TIME_TO_DIE = 180
+SPEED = 14
 
-WIDTH = 1920
-HEIGHT = 1080
+WIDTH = 1600
+HEIGHT = 880
 
 CAR_SIZE_X = 60    
 CAR_SIZE_Y = 60
@@ -26,7 +28,7 @@ current_generation = 0 # Generation counter
 
 
 indexEndPos = 0
-training_endPos = [[900 , 250], [400, 700]]
+training_endPos = [ [1200 , 200], [1200 , 500], [200 , 250], [400, 600]]
 endPos = training_endPos[0]
 # endPos = [400, 700]
 endPointImage = pygame.image.load('endpoint.png')
@@ -41,11 +43,11 @@ class Car:
         self.rotated_sprite = self.sprite 
 
         # self.position = [690, 740] # Starting Position
-        self.position = [1200, 750] # Starting Position
+        self.position = [600, 300] # Starting Position
         self.angle = 0
-        self.speed = 0
+        self.speed = SPEED
 
-        self.speed_set = False # Flag For Default Speed Later on
+        self.speed_set = True # Flag For Default Speed Later on
 
         self.center = [self.position[0] + CAR_SIZE_X / 2, self.position[1] + CAR_SIZE_Y / 2] # Calculate Center
 
@@ -57,6 +59,11 @@ class Car:
         self.distance = 0 # Distance Driven
         self.time = 0 # Time Passed
         self.reached = False
+
+
+        #NEW
+        self.lastPos = self.position
+        self.lastCheck = 0
 
     def draw(self, screen):
         screen.blit(self.rotated_sprite, self.position) # Draw Sprite
@@ -113,26 +120,26 @@ class Car:
         # Set The Speed To 20 For The First Time
         # Only When Having 4 Output Nodes With Speed Up and Down
         if not self.speed_set:
-            self.speed = 10
+            self.speed = SPEED
             self.speed_set = True
 
         # Get Rotated Sprite And Move Into The Right X-Direction
         # Don't Let The Car Go Closer Than 20px To The Edge
         self.rotated_sprite = self.rotate_center(self.sprite, self.angle)
         self.position[0] += math.cos(math.radians(360 - self.angle)) * self.speed
-        self.position[0] = max(self.position[0], 20)
-        self.position[0] = min(self.position[0], WIDTH - 120)
+        # self.position[0] = max(self.position[0], 20)
+        # self.position[0] = min(self.position[0], WIDTH - 120)
 
         # Increase Distance and Time
         self.distance += self.speed
         self.time += 1
         
-        if self.time > 200:
+        if self.time > TIME_TO_DIE:
             self.alive = False
         # Same For Y-Position
         self.position[1] += math.sin(math.radians(360 - self.angle)) * self.speed
-        self.position[1] = max(self.position[1], 20)
-        self.position[1] = min(self.position[1], WIDTH - 120)
+        # self.position[1] = max(self.position[1], 20)
+        # self.position[1] = min(self.position[1], WIDTH - 120)
 
         # Calculate New Center
         self.center = [int(self.position[0]) + CAR_SIZE_X / 2, int(self.position[1]) + CAR_SIZE_Y / 2]
@@ -155,12 +162,17 @@ class Car:
             self.check_radar(d, game_map)
 
     def get_data(self):
+
+        
+        x = self.center[0]-endPos[0]
+        y = self.center[1]-endPos[1]
+
+
         # Get Distances To Border
         radars = self.radars
-        return_values = [0, 0, 0, 0, 0]
+        return_values = [0, 0, 0, 0, 0, x, y, endPos[0], endPos[1]]
+        # print(return_values)
 
-        return_values.append(endPos[0])
-        return_values.append(endPos[1])
 
         for i, radar in enumerate(radars):
             return_values[i] = int(radar[1] / 30)
@@ -171,21 +183,30 @@ class Car:
         # Basic Alive Function
         return self.alive
 
+
+        
+    # def get_reward(self):
+
+
+    #     # Calculate Reward based on distance to the endPoint
+    #     #max_dist = form voor max dist 
+    #     distance_to_end_point = math.sqrt((self.center[0] - endPos[0])**2 + (self.center[1] - endPos[1])**2)
+        
+    #     return 2000-distance_to_end_point
+    
     def get_reward(self):
-        # Calculate Reward (Maybe Change?)
-        # return self.distance / 50.0
-        x = math.pow(self.center[0]-endPos[0],2)
-        y = math.pow(self.center[1]-endPos[1],2)
 
-        close = 1/math.sqrt(x + y) 
-        reach_rew = 0
-        if self.reached:
-            reach_rew = 10000
 
-        # print(close*1000000 - (self.distance*2) + reach_rew)
-        return close*1000000 - (self.distance*2) + reach_rew
-        #return self.distance / (CAR_SIZE_X / 2) + alive_rew
+        # Calculate Reward based on distance to the endPoint
+        distance_to_end_point = math.sqrt((self.center[0] - endPos[0])**2 + (self.center[1] - endPos[1])**2)
+        
+        # Reward progress toward the endpoint
+        progress_reward = 1/distance_to_end_point
 
+        # Combine the rewards and penalties
+        total_reward = max(0, progress_reward)
+
+        return total_reward
     def rotate_center(self, image, angle):
         # Rotate The Rectangle
         rectangle = image.get_rect()
@@ -199,9 +220,11 @@ class Car:
 def run_simulation(genomes, config):
     global indexEndPos
     global training_endPos
+    global WIDTH
+    global HEIGHT
 
     indexEndPos += 1
-    if indexEndPos > 1:
+    if indexEndPos > len(training_endPos)-1:
         indexEndPos = 0
     global endPos
     endPos = training_endPos[indexEndPos]
@@ -213,8 +236,10 @@ def run_simulation(genomes, config):
 
     # Initialize PyGame And The Display
     pygame.init()
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
-
+    # screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    screen = pygame.display.set_mode((0, 0))
+    WIDTH, HEIGHT = pygame.display.get_surface().get_size()
+    # print(WIDTH , " : " , HEIGHT)
     # For All Genomes Passed Create A New Neural Network
     for i, g in genomes:
         net = neat.nn.FeedForwardNetwork.create(g, config)
@@ -228,7 +253,7 @@ def run_simulation(genomes, config):
     clock = pygame.time.Clock()
     generation_font = pygame.font.SysFont("Arial", 30)
     alive_font = pygame.font.SysFont("Arial", 20)
-    game_map = pygame.image.load('testCity.png').convert() # Convert Speeds Up A Lot
+    game_map = pygame.image.load('newCity.png').convert() # Convert Speeds Up A Lot
 
     global current_generation
     current_generation += 1
@@ -256,10 +281,8 @@ def run_simulation(genomes, config):
             elif choice == 1:
                 car.angle -= 10 # Right
             elif choice == 2:
-                if(car.speed - 2 >= 12):
-                    car.speed -= 2 # Slow Down
-            else:
-                car.speed += 2 # Speed Up
+                pass
+
         
         # Check If Car Is Still Alive
         # Increase Fitness If Yes And Break Loop If Not
@@ -269,6 +292,7 @@ def run_simulation(genomes, config):
                 still_alive += 1
                 car.update(game_map)
                 genomes[i][1].fitness += car.get_reward()
+
 
         if still_alive == 0:
             break
@@ -286,7 +310,7 @@ def run_simulation(genomes, config):
         # Display Info
         text = generation_font.render("Generation: " + str(current_generation), True, (0,0,0))
         text_rect = text.get_rect()
-        text_rect.center = (900, 450)
+        text_rect.center = (900, 900)
         screen.blit(text, text_rect)
 
         text = alive_font.render("Still Alive: " + str(still_alive), True, (0, 0, 0))
@@ -314,7 +338,7 @@ if __name__ == "__main__":
     population.add_reporter(stats)
     
     # Run Simulation For A Maximum of 1000 Generations
-    population.run(run_simulation, 2000)
+    population.run(run_simulation, 20000)
 
     print('done')
     
