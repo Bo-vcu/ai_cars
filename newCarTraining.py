@@ -12,8 +12,8 @@ import pygame
 # Constants
 # WIDTH = 1600
 # HEIGHT = 880
-TIME_TO_DIE = 180
-SPEED = 14
+TIME_TO_DIE = 200
+SPEED = 10
 
 WIDTH = 1600
 HEIGHT = 880
@@ -28,7 +28,7 @@ current_generation = 0 # Generation counter
 
 
 indexEndPos = 0
-training_endPos = [ [1200 , 200], [1200 , 500], [200 , 250], [400, 600]]
+training_endPos = [ [1200 , 200], [1200 , 500], [200 , 250], [400, 600], [1350 , 150]]
 endPos = training_endPos[0]
 # endPos = [400, 700]
 endPointImage = pygame.image.load('endpoint.png')
@@ -44,7 +44,9 @@ class Car:
 
         # self.position = [690, 740] # Starting Position
         self.position = [600, 300] # Starting Position
-        self.angle = 0
+        # self.angle = 0
+        self.angle = random.randint(0, 359)
+
         self.speed = SPEED
 
         self.speed_set = True # Flag For Default Speed Later on
@@ -167,10 +169,11 @@ class Car:
         x = self.center[0]-endPos[0]
         y = self.center[1]-endPos[1]
 
+        angle_to_endpoint = math.atan2(y,x) * (180/math.pi) -180
 
         # Get Distances To Border
         radars = self.radars
-        return_values = [0, 0, 0, 0, 0, x, y, endPos[0], endPos[1]]
+        return_values = [0, 0, 0, 0, 0, self.center[0], self.center[1], self.angle, angle_to_endpoint]
         # print(return_values)
 
 
@@ -184,15 +187,6 @@ class Car:
         return self.alive
 
 
-        
-    # def get_reward(self):
-
-
-    #     # Calculate Reward based on distance to the endPoint
-    #     #max_dist = form voor max dist 
-    #     distance_to_end_point = math.sqrt((self.center[0] - endPos[0])**2 + (self.center[1] - endPos[1])**2)
-        
-    #     return 2000-distance_to_end_point
     
     def get_reward(self):
 
@@ -201,12 +195,13 @@ class Car:
         distance_to_end_point = math.sqrt((self.center[0] - endPos[0])**2 + (self.center[1] - endPos[1])**2)
         
         # Reward progress toward the endpoint
-        progress_reward = 1/distance_to_end_point
+        progress_reward = 1000 - distance_to_end_point
 
         # Combine the rewards and penalties
         total_reward = max(0, progress_reward)
-
         return total_reward
+    
+
     def rotate_center(self, image, angle):
         # Rotate The Rectangle
         rectangle = image.get_rect()
@@ -223,11 +218,7 @@ def run_simulation(genomes, config):
     global WIDTH
     global HEIGHT
 
-    indexEndPos += 1
-    if indexEndPos > len(training_endPos)-1:
-        indexEndPos = 0
-    global endPos
-    endPos = training_endPos[indexEndPos]
+
     
 
     # Empty Collections For Nets and Cars
@@ -262,6 +253,7 @@ def run_simulation(genomes, config):
     counter = 0
 
 
+    indexEndPos = 0
 
 
 
@@ -291,15 +283,28 @@ def run_simulation(genomes, config):
             if car.is_alive():
                 still_alive += 1
                 car.update(game_map)
-                genomes[i][1].fitness += car.get_reward()
+            genomes[i][1].fitness += car.get_reward()
+                #print('g',i, ' : ' ,genomes[i][1].fitness)
 
 
         if still_alive == 0:
-            break
+            
+            if indexEndPos >= len(training_endPos):
+                break
+            global endPos
+            endPos = training_endPos[indexEndPos]
 
-        counter += 1
-        if counter == 30 * 40: # Stop After About 20 Seconds
-            break
+            for i in range(len(cars)):
+                cars[i] = Car()
+
+            indexEndPos += 1
+            
+
+            
+
+        # counter += 1
+        # if counter == 30 * 40: # Stop After About 20 Seconds
+        #     break
 
         # Draw Map And All Cars That Are Alive
         screen.blit(game_map, (0, 0))
