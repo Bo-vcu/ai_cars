@@ -23,10 +23,16 @@ BORDER_COLOR = (255, 255, 255, 255) # Color To Crash on Hit
 
 current_generation = 0 # Generation counter
 
-
-# endPoint = [400, 400]
-endPoint = [410, 390]
 endPointImage = pygame.image.load('endpoint.png')
+# endPoint = [410, 390]
+# if current_generation <= 2:
+#     endPoint = [410, 390]
+# elif current_generation <= 40:
+#     endPoint = [1000, 200]
+# elif current_generation > 40:
+#     endPoint = [410, 390]
+
+
 
 
 class Car:
@@ -94,7 +100,7 @@ class Car:
         dist = int(math.sqrt(math.pow(x - self.center[0], 2) + math.pow(y - self.center[1], 2)))
         self.radars.append([(x, y), dist])
     
-    def update(self, game_map):
+    def update(self, game_map, endPoint):
 
 
         x = math.pow(self.center[0]-endPoint[0],2)
@@ -161,7 +167,7 @@ class Car:
         # Basic Alive Function
         return self.alive
 
-    def get_reward(self):
+    def get_reward(self, endPoint):
         # Calculate Reward based on distance to the endPoint
         #max_dist = form voor max dist 
         distance_to_end_point = math.sqrt((self.center[0] - endPoint[0])**2 + (self.center[1] - endPoint[1])**2)
@@ -221,6 +227,12 @@ def run_simulation(genomes, config):
 
     while True:
         
+        if current_generation <= 20:
+            endPoint = [410, 390]
+        elif current_generation <= 40:
+            endPoint = [1000, 200]
+        elif current_generation > 40:
+            endPoint = [410, 390]
 
         # Exit On Quit Event
         for event in pygame.event.get():
@@ -247,8 +259,8 @@ def run_simulation(genomes, config):
         for i, car in enumerate(cars):
             if car.is_alive():
                 still_alive += 1
-                car.update(game_map)
-                genomes[i][1].fitness += car.get_reward()
+                car.update(game_map, endPoint)
+                genomes[i][1].fitness += car.get_reward(endPoint)
 
         if still_alive == 0:
             break
