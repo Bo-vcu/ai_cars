@@ -5,6 +5,7 @@ import math
 import random
 import sys
 import os
+import matplotlib.pyplot as plt
 
 import neat
 import pygame
@@ -208,6 +209,29 @@ def run_simulation(genomes, config):
 
         cars.append(Car())
 
+
+
+avg_fitness_history = []
+def run_simulation(genomes, config):
+    global avg_fitness_history
+    
+    # Empty Collections For Nets and Cars
+    nets = []
+    cars = []
+
+    # Initialize PyGame And The Display
+    pygame.init()
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+
+    # For All Genomes Passed Create A New Neural Network
+    for i, g in genomes:
+        net = neat.nn.FeedForwardNetwork.create(g, config)
+        nets.append(net)
+        g.fitness = 0
+
+        cars.append(Car())
+
+
     # Clock Settings
     # Font Settings & Loading Map
     clock = pygame.time.Clock()
@@ -288,6 +312,17 @@ def run_simulation(genomes, config):
         screen.blit(endPointImage, endPoint)
         pygame.display.flip()
         clock.tick(60) # 60 FPS
+    #plotting
+    
+    # avg_fitness = sum(g[1].fitness for g in genomes) / len(genomes)
+    # avg_fitness_history.append(avg_fitness)
+    # plt.ion()  # Turn on interactive mode
+    # plt.plot(range(1, len(avg_fitness_history) + 1), avg_fitness_history)  # Start x-axis from 1
+    # plt.xlabel('Generation')
+    # plt.ylabel('Average fitness')
+    # plt.title('Reward History')
+    # plt.draw()  # Draw the plot
+    # plt.pause(0.001)  # Add a small pause to give the plot time to update 
 
 if __name__ == "__main__":
     
