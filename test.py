@@ -200,6 +200,10 @@ def drive_with_trained_network(network, config):
                 if GameState == 0:
                     endPos = [event.pos[0], event.pos[1]]
                     GameState = 3
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_r:
+                    if GameState == 3:
+                        GameState = 0
 
         screen.fill((0,0,0)) 
         if GameState == 0:
@@ -227,6 +231,11 @@ def drive_with_trained_network(network, config):
             screen.blit(game_map, (0, 0))
             screen.blit(endPointImage, endPos)
             car.draw(screen)
+
+            text = generation_font.render("Press (R) to choose another point on the map", True, (255, 0, 0))
+            text_rect = text.get_rect()
+            text_rect.center = (900, 900)
+            screen.blit(text, text_rect)
 
 
         pygame.display.flip()
