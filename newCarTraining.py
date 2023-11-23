@@ -5,6 +5,7 @@ import math
 import random
 import sys
 import os
+from matplotlib import pyplot as plt
 
 import neat
 import pygame
@@ -211,7 +212,7 @@ class Car:
         rotated_image = rotated_image.subsurface(rotated_rectangle).copy()
         return rotated_image
 
-
+avg_fitness_history = []
 def run_simulation(genomes, config):
     global indexEndPos
     global training_endPos
@@ -325,6 +326,18 @@ def run_simulation(genomes, config):
         screen.blit(endPointImage, endPos)
         pygame.display.flip()
         clock.tick(60) # 60 FPS
+
+    #plotting
+    
+    avg_fitness = sum(g[1].fitness for g in genomes) / len(genomes)
+    avg_fitness_history.append(avg_fitness)
+    plt.ion()  # Turn on interactive mode
+    plt.plot(range(1, len(avg_fitness_history) + 1), avg_fitness_history)  # Start x-axis from 1
+    plt.xlabel('Generation')
+    plt.ylabel('Average fitness')
+    plt.title('Reward History')
+    plt.draw()  # Draw the plot
+    plt.pause(0.001)  # Add a small pause to give the plot time to update 
 
 if __name__ == "__main__":
     
