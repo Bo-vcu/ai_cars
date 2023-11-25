@@ -6,10 +6,21 @@ import os
 
 import neat
 import pygame
+from openai import OpenAI
+from dotenv import load_dotenv
+import asyncio
+
+load_dotenv()
 
 
-WIDTH = 1920
-HEIGHT = 1080
+client = OpenAI(
+    # defaults to os.environ.get("OPENAI_API_KEY")
+    api_key=os.environ.get("OPENAI_API_KEY"),
+)
+
+
+WIDTH = 1536
+HEIGHT = 864
 
 CAR_SIZE_X = 60    
 CAR_SIZE_Y = 60
@@ -17,6 +28,36 @@ CAR_SIZE_Y = 60
 BORDER_COLOR = (255, 255, 255, 255) # Color To Crash on Hit
 
 current_generation = 0 # Generation counter
+
+
+endPos = [400, 700]
+
+
+GameState = 0
+
+
+async def main():
+    import pickle
+    # Load the best genome and network
+    with open("neat_best_genome.pkl", 'rb') as input_file:
+        best_genome = pickle.load(input_file)
+
+    with open("neat_best_network.pkl", 'rb') as input_file:
+        best_network = pickle.load(input_file)
+
+
+    await drive_with_trained_network(best_network, best_genome)
+
+async def send_to_taxi_driver(text):
+    print('send to text driver')
+    completion = client.chat.completions.create(
+    model="gpt-3.5-turbo",
+    messages=[
+        {"role": "system", "content": "You are a taxi driver and I am ur passenger"},
+        {"role": "user", "content": text}
+    ]
+    )
+    return completion.choices[0].message
 
 class Car:
 
@@ -28,7 +69,7 @@ class Car:
 
         # self.position = [690, 740] # Starting Position
         # self.position = [830, 920] # Starting Position
-        self.position = [1500, 800] # Starting Position
+        self.position = [600, 300] # Starting Position
         self.angle = 0
         self.speed = 0
 
@@ -60,8 +101,15 @@ class Car:
         for point in self.corners:
             # If Any Corner Touches Border Color -> Crash
             # Assumes Rectangle
-            if game_map.get_at((int(point[0]), int(point[1]))) == BORDER_COLOR:
-                self.alive = False
+            x = int(point[0])
+            y = int(point[1])
+            
+            if (
+                0 <= x < game_map.get_width()
+                and 0 <= y < game_map.get_height()
+                and game_map.get_at((x, y)) == BORDER_COLOR
+            ):
+                self.alive = False  
                 break
 
     def check_radar(self, degree, game_map):
@@ -76,7 +124,6 @@ class Car:
             and not game_map.get_at((x, y)) == BORDER_COLOR
             and length < 300
         ):
-        # while not game_map.get_at((x, y)) == BORDER_COLOR and length < 300:
             length = length + 1
             x = int(self.center[0] + math.cos(math.radians(360 - (self.angle + degree))) * length)
             y = int(self.center[1] + math.sin(math.radians(360 - (self.angle + degree))) * length)
@@ -129,9 +176,19 @@ class Car:
             self.check_radar(d, game_map)
 
     def get_data(self):
+
+        
+        x = self.center[0]-endPos[0]
+        y = self.center[1]-endPos[1]
+
+        angle_to_endpoint = math.atan2(y,x) * (180/math.pi) -180
+
         # Get Distances To Border
         radars = self.radars
-        return_values = [0, 0, 0, 0, 0]
+        return_values = [0, 0, 0, 0, 0, self.center[0], self.center[1], self.angle, angle_to_endpoint]
+        # print(return_values)
+
+
         for i, radar in enumerate(radars):
             return_values[i] = int(radar[1] / 30)
 
@@ -141,10 +198,6 @@ class Car:
         # Basic Alive Function
         return self.alive
 
-    def get_reward(self):
-        # Calculate Reward (Maybe Change?)
-        # return self.distance / 50.0
-        return self.distance / (CAR_SIZE_X / 2)
 
     def rotate_center(self, image, angle):
         # Rotate The Rectangle
@@ -156,49 +209,111 @@ class Car:
         return rotated_image
 
 
-def drive_with_trained_network(network, config):
+async def drive_with_trained_network(network, config):
+    global endPos
+    global GameState
+
+
+    endPointImage = pygame.image.load('endpoint.png')
+
     # Initialize PyGame and the Display
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     clock = pygame.time.Clock()
-    game_map = pygame.image.load('city.png').convert()
+    game_map = pygame.image.load('newCity.png').convert()
 
     car = Car()  # Create a single car instance
+    generation_font = pygame.font.SysFont("Arial", 30)  
+    chatbox_font = pygame.font.SysFont("Arial", 20)  
+
+
+    current_text = ""
+    response = ""
 
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit(0)
+            if event.type == pygame.MOUSEBUTTONUP:
+                print(event.pos)
+                if GameState == 0:
+                    car = Car()
+                    endPos = [event.pos[0], event.pos[1]]
+                    GameState = 3
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_F5:
+                    if GameState == 3:
+                        GameState = 0
+                elif event.key == pygame.K_RETURN:
+                    current_text = ''
+                    res = await send_to_taxi_driver(current_text)
+                    print('--- res: ', res)
+                    response = res.content
+                    textColor = (0,255,0)
+                elif event.key == pygame.K_SPACE:
+                    current_text += ' '
+                elif event.key == pygame.K_BACKSPACE:
+                    current_text = current_text[0: len(current_text)-1]
+                elif pygame.key.name(event.key) in 'abcdefghijklmnopqrstuvwxyz':
+                    
+                    textColor = (255,0,0)
+                    key_char = pygame.key.name(event.key)
+                    current_text += key_char
+                    #print('key: ', key_char, ' text: ', current_text)
 
-        output = network.activate(car.get_data())  # Get the network's output
-        choice = output.index(max(output))
 
-        # Update the car based on the network's output (same logic as in the learning part)
-        if choice == 0:
-            car.angle += 10
-        elif choice == 1:
-            car.angle -= 10
-        elif choice == 2:
-            if car.speed - 2 >= 12:
-                car.speed -= 2
-        else:
-            car.speed += 2
+        screen.fill((0,0,0)) 
+        if GameState == 0:
 
-        car.update(game_map)  # Update the car
+            text = generation_font.render("Select a point on the map", True, (255, 0, 0))
+            text_rect = text.get_rect()
+            text_rect.center = (900, 900)
+            screen.blit(text, text_rect)
+            screen.blit(game_map, (0, 0))
+        elif GameState == 3:
 
-        screen.blit(game_map, (0, 0))
-        car.draw(screen)
+            output = network.activate(car.get_data())  # Get the network's output
+            choice = output.index(max(output))
+
+            # Update the car based on the network's output (same logic as in the learning part)
+            if choice == 0:
+                car.angle += 10  # Left
+            elif choice == 1:
+                car.angle -= 10  # Right
+            elif choice == 2:
+                pass
+
+            car.update(game_map)
+
+            screen.blit(game_map, (0, 0))
+            screen.blit(endPointImage, endPos)
+            car.draw(screen)
+
+            text = generation_font.render("Press (F5) to choose another point on the map", True, (255,0,0))
+            text_rect = text.get_rect()
+            text_rect.center = (900, 900)
+            screen.blit(text, text_rect)
+
+
+        # draw chatbox
+
+        pygame.draw.rect(screen, (255, 116, 177), [300, 10, 900, 100])
+        
+        chatbox = chatbox_font.render('you: ' + current_text, True, (255,0,0))
+        chatbox_rect = chatbox.get_rect()
+        chatbox_rect.center = (600, 20)
+        screen.blit(chatbox, chatbox_rect)
+
+        chatbox = chatbox_font.render('taxi driver: ' + response, True, (0,255,0))
+        chatbox_rect = chatbox.get_rect()
+        chatbox_rect.center = (600, 50)
+        screen.blit(chatbox, chatbox_rect)
+
         pygame.display.flip()
         clock.tick(60)
 
 if __name__ == "__main__":
+    asyncio.run(main())
 
-    import pickle
-    # Load the best genome and network
-    with open("neat_best_genome.pkl", 'rb') as input_file:
-        best_genome = pickle.load(input_file)
 
-    with open("neat_best_network.pkl", 'rb') as input_file:
-        best_network = pickle.load(input_file)
 
-    drive_with_trained_network(best_network, best_genome)

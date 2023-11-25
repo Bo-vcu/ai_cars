@@ -16,8 +16,8 @@ import pygame
 TIME_TO_DIE = 200
 SPEED = 10
 
-WIDTH = 1600
-HEIGHT = 880
+WIDTH = 1536
+HEIGHT = 864
 
 CAR_SIZE_X = 60    
 CAR_SIZE_Y = 60
@@ -356,7 +356,7 @@ if __name__ == "__main__":
     population.add_reporter(stats)
     
     # Run Simulation For A Maximum of 1000 Generations
-    population.run(run_simulation, 20000)
+    population.run(run_simulation, 1)
 
     print('done')
     
