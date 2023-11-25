@@ -1,9 +1,9 @@
+import subprocess
 import pygame
 import sys
 from settings import *
 from menu import Menu
 from test2 import Test2
-from test import Test1
 
 class Main:
     def __init__(self):
@@ -21,7 +21,8 @@ class Main:
         self.state = Menu(self)
     
     def __setstate_test1__(self):
-        self.state = Test1(self)
+        subprocess.Popen(["python", 'test.py'])
+        self.quit()
 
     def __setstate_test2__(self):
         self.state = Test2(self)

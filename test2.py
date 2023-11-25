@@ -13,7 +13,7 @@ class Car:
     def __init__(self, game_state):
         self.game_state = game_state
         # Load Car Sprite and Rotate
-        self.sprite = pygame.image.load('testaxir.png').convert() # Convert Speeds Up A Lot
+        self.sprite = pygame.image.load('taxi_zonder_bg.png').convert() # Convert Speeds Up A Lot
         self.sprite = pygame.transform.scale(self.sprite, (CAR_SIZE_X, CAR_SIZE_Y))
         self.rotated_sprite = self.sprite 
 
@@ -170,10 +170,10 @@ class Car:
 class Test2(State):
     def __init__(self, game_state):
         # Load the best genome and network
-        with open("goodgenome.pkl", 'rb') as input_file:
+        with open("neat_best_genome.pkl", 'rb') as input_file:
             self.best_genome = pickle.load(input_file)
 
-        with open("goodgenome_network.pkl", 'rb') as input_file:
+        with open("neat_best_network.pkl", 'rb') as input_file:
             self.best_network = pickle.load(input_file)
 
         self.endPointImage = pygame.image.load('endpoint.png').convert()
