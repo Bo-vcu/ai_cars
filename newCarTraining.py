@@ -29,7 +29,7 @@ current_generation = 0 # Generation counter
 
 
 indexEndPos = 0
-training_endPos = [ [1271, 85],[1190, 615],[435, 570],[655, 246] ]
+training_endPos = [ [1190, 615],[435, 570],[655, 246], [1271, 85] ]
 endPos = training_endPos[0]
 # endPos = [400, 700]
 endPointImage = pygame.image.load('endpoint.png')
@@ -39,13 +39,13 @@ class Car:
 
     def __init__(self):
         # Load Car Sprite and Rotate
-        self.sprite = pygame.image.load('car.png').convert() # Convert Speeds Up A Lot
+        self.sprite = pygame.image.load('new_taxi.jpg').convert() # Convert Speeds Up A Lot
         self.sprite = pygame.transform.scale(self.sprite, (CAR_SIZE_X, CAR_SIZE_Y))
         self.rotated_sprite = self.sprite 
 
         # self.position = [690, 740] # Starting Position
         self.position = [97, 37] # Starting Position
-        self.angle = 0
+        self.angle = 15
         # self.angle = random.randint(0, 359)
 
         self.speed = SPEED
@@ -192,15 +192,26 @@ class Car:
     def get_reward(self):
 
 
-        # Calculate Reward based on distance to the endPoint
+      # Reward progress toward the endpoint
         distance_to_end_point = math.sqrt((self.center[0] - endPos[0])**2 + (self.center[1] - endPos[1])**2)
-        
-        # Reward progress toward the endpoint
         progress_reward = 1000 - distance_to_end_point
 
-        # Combine the rewards and penalties
-        total_reward = max(0, progress_reward)
+        # Reward for staying alive or covering distance
+        distance_reward = self.distance / (CAR_SIZE_X / 2)
+
+        # Set weights for the two reward functions
+        weight_progress_reward = 0.8  # Adjust this weight based on the importance of progress_reward
+        weight_distance_reward = 0.2  # Adjust this weight based on the importance of distance_reward
+
+        x = math.pow(self.center[0]-endPos[0],2)
+        y = math.pow(self.center[1]-endPos[1],2)
+       
+        # Combine the rewards
+        total_reward = weight_progress_reward * progress_reward + weight_distance_reward * distance_reward
+        if(math.sqrt(x + y) <= 50):
+            total_reward*=2
         return total_reward
+    
     
 
     def rotate_center(self, image, angle):
