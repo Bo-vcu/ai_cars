@@ -17,11 +17,10 @@ class Button:
 
         self.text = self.font.render(self.text_input, True, self.base_color)
         self.text_rect = self.text.get_rect(center=pos)
-
-        self.background_rect = pygame.Rect(0, 0, (self.text_rect.w if self.background_width == None else self.background_width), self.text_rect.height + 30)
+        self.background_rect = pygame.Rect(0, 0, (self.text_rect.w if self.background_width == None else self.background_width), self.text_rect.height * 2.1)  # resposive: + 30 if text height is 33, so 33 - 30 = 63 and 63 / 30 = 2.1
         self.background_rect.center = pos
 
-        self.border_rect = pygame.Rect(0, 0, (self.text_rect.w if self.background_width == None else self.background_width) + self.border_width, self.text_rect.height + 30 + self.border_width)
+        self.border_rect = pygame.Rect(0, 0, (self.text_rect.w if self.background_width == None else self.background_width) + self.border_width, self.text_rect.height * 2.1 + self.border_width)  # resposive: + 30 if text height is 33, so 33 - 30 = 63 and 63 / 30 = 2.1
         self.border_rect.center = pos
 
     def render(self):
