@@ -8,8 +8,8 @@ import neat
 import pygame
 
 
-WIDTH = 1920
-HEIGHT = 1080
+WIDTH = 1536
+HEIGHT = 864
 
 CAR_SIZE_X = 60    
 CAR_SIZE_Y = 60
@@ -74,7 +74,7 @@ class Car:
             if (
                 0 <= x < game_map.get_width()
                 and 0 <= y < game_map.get_height()
-                and not game_map.get_at((x, y)) == BORDER_COLOR
+                and game_map.get_at((x, y)) == BORDER_COLOR
             ):
                 self.alive = False
                 break
@@ -197,7 +197,9 @@ def drive_with_trained_network(network, config):
             if event.type == pygame.QUIT:
                 sys.exit(0)
             if event.type == pygame.MOUSEBUTTONUP:
+                print(event.pos)
                 if GameState == 0:
+                    car = Car()
                     endPos = [event.pos[0], event.pos[1]]
                     GameState = 3
             if event.type == pygame.KEYUP:

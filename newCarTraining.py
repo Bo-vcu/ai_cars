@@ -10,14 +10,15 @@ from matplotlib import pyplot as plt
 import neat
 import pygame
 
+import copy
 # Constants
 # WIDTH = 1600
 # HEIGHT = 880
 TIME_TO_DIE = 200
 SPEED = 10
 
-WIDTH = 1600
-HEIGHT = 880
+WIDTH = 1536
+HEIGHT = 864
 
 CAR_SIZE_X = 60    
 CAR_SIZE_Y = 60
@@ -29,7 +30,7 @@ current_generation = 0 # Generation counter
 
 
 indexEndPos = 0
-training_endPos = [ [1200 , 200], [1200 , 500], [200 , 250], [400, 600], [1350 , 150]]
+training_endPos = [ [1200 , 200], [200 , 250], [400, 600], [600, 300]]
 endPos = training_endPos[0]
 # endPos = [400, 700]
 endPointImage = pygame.image.load('endpoint.png')
@@ -37,16 +38,17 @@ endPointImage = pygame.image.load('endpoint.png')
 
 class Car:
 
-    def __init__(self):
+    def __init__(self, sp = [600, 300]):
         # Load Car Sprite and Rotate
         self.sprite = pygame.image.load('car.png').convert() # Convert Speeds Up A Lot
         self.sprite = pygame.transform.scale(self.sprite, (CAR_SIZE_X, CAR_SIZE_Y))
         self.rotated_sprite = self.sprite 
 
         # self.position = [690, 740] # Starting Position
-        self.position = [600, 300] # Starting Position
+        self.position = sp
         # self.angle = 0
-        self.angle = random.randint(0, 359)
+        # self.angle = random.randint(0, 359)
+        self.angle = 270
 
         self.speed = SPEED
 
@@ -84,7 +86,14 @@ class Car:
         for point in self.corners:
             # If Any Corner Touches Border Color -> Crash
             # Assumes Rectangle
-            if game_map.get_at((int(point[0]), int(point[1]))) == BORDER_COLOR:
+            x = int(point[0])
+            y =  int(point[1])
+
+            if(
+                0 <= x < game_map.get_width()
+                and 0 <= y < game_map.get_height()
+                and
+                game_map.get_at((int(point[0]), int(point[1]))) == BORDER_COLOR):
                 self.alive = False
                 break
 
@@ -109,7 +118,8 @@ class Car:
         self.radars.append([(x, y), dist])
     
     def update(self, game_map):
-
+            
+    
         x = math.pow(self.center[0]-endPos[0],2)
         y = math.pow(self.center[1]-endPos[1],2)
         # print(endPos)
@@ -117,6 +127,7 @@ class Car:
             self.speed = 0
             self.speed_set = True
             self.reached = True
+            self.position = endPos
 
 
 
@@ -190,6 +201,14 @@ class Car:
 
     
     def get_reward(self):
+        
+        total_reward = 0
+        
+        time_penalty = 0.01  # Adjust this value based on your desired time penalty
+        total_reward -= time_penalty * self.time  # Include the elapsed time in your calculations
+
+        exploration_reward = random.uniform(0, 0.1)  # Adjust the range based on your preferences
+        total_reward += exploration_reward
 
 
         # Calculate Reward based on distance to the endPoint
@@ -215,11 +234,10 @@ class Car:
 avg_fitness_history = []
 def run_simulation(genomes, config):
     global indexEndPos
-    global training_endPos
     global WIDTH
     global HEIGHT
-
-
+    global endPos
+    global current_generation
     
 
     # Empty Collections For Nets and Cars
@@ -231,14 +249,20 @@ def run_simulation(genomes, config):
     # screen = pygame.display.set_mode((WIDTH, HEIGHT))
     screen = pygame.display.set_mode((0, 0))
     WIDTH, HEIGHT = pygame.display.get_surface().get_size()
-    # print(WIDTH , " : " , HEIGHT)
+    r = random.randint(0, len(training_endPos)-1)
+    randPos = training_endPos[r]
+    while randPos == endPos:
+        r = random.randint(0, len(training_endPos)-1)
+        randPos = training_endPos[r]
+
     # For All Genomes Passed Create A New Neural Network
     for i, g in genomes:
         net = neat.nn.FeedForwardNetwork.create(g, config)
         nets.append(net)
         g.fitness = 0
 
-        cars.append(Car())
+
+        cars.append(Car(copy.deepcopy(randPos)))
 
     # Clock Settings
     # Font Settings & Loading Map
@@ -247,7 +271,6 @@ def run_simulation(genomes, config):
     alive_font = pygame.font.SysFont("Arial", 20)
     game_map = pygame.image.load('newCity.png').convert() # Convert Speeds Up A Lot
 
-    global current_generation
     current_generation += 1
 
     # Simple Counter To Roughly Limit Time (Not Good Practice)
@@ -259,7 +282,7 @@ def run_simulation(genomes, config):
 
 
     while True:
-
+        
         # Exit On Quit Event
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -284,6 +307,7 @@ def run_simulation(genomes, config):
             if car.is_alive():
                 still_alive += 1
                 car.update(game_map)
+
             genomes[i][1].fitness += car.get_reward()
                 #print('g',i, ' : ' ,genomes[i][1].fitness)
 
@@ -292,12 +316,18 @@ def run_simulation(genomes, config):
             
             if indexEndPos >= len(training_endPos):
                 break
-            global endPos
+            
+
             endPos = training_endPos[indexEndPos]
 
-            for i in range(len(cars)):
-                cars[i] = Car()
+            r  = random.randint(0, len(training_endPos)-1)
+            randPos = training_endPos[r]
 
+            while randPos == endPos:
+                r = random.randint(0, len(training_endPos)-1)
+                randPos = training_endPos[r]
+            for i in range(len(cars)):
+                cars[i] = Car(copy.deepcopy(randPos))
             indexEndPos += 1
             
 
