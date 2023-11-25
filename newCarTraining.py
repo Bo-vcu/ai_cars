@@ -32,9 +32,9 @@ current_generation = 0 # Generation counter
 indexEndPos = 0
 # training_endPos = [ [1200 , 200], [200 , 250], [400, 600], [600, 300]]
 #mastapiece
-# training_endPos = [ [1271, 85],[1190, 615],[435, 570],[655, 246],[97, 37] ]
+training_endPos = [ [1271, 85],[1190, 615],[435, 570],[655, 246],[97, 37] ]
 #driehoek
-training_endPos = [ [76, 80],[645, 602],[1333, 208] ]
+# training_endPos = [ [76, 80],[645, 602],[1333, 208] ]
 endPos = training_endPos[0]
 # endPos = [400, 700]
 endPointImage = pygame.image.load('endpoint.png')
