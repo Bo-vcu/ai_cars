@@ -1,61 +1,37 @@
-import subprocess
+from state import State
+from button import Button
+from settings import *
 import pygame
-import sys
-import os
 
-# Initialize Pygame
-pygame.init()
+class Menu(State):
+    def __init__(self, game_state):
+        self.game_state = game_state
+        self.smallFont = pygame.font.SysFont('Corbel', 32)
+        self.buttons = [Button(pos=(HALF_WIDTH, HALF_HEIGHT - 100), text_input="Play with set points",
+                            font=self.smallFont,
+                            base_color=black, hovering_color=taxi_blue, background_color=white,
+                            border_color=yellow, game_state = self.game_state),
+                        Button(pos=(HALF_WIDTH, HALF_HEIGHT), text_input="Pick your own points",
+                            font=self.smallFont,
+                            base_color=black, hovering_color=taxi_blue, background_color=white,
+                            border_color=yellow, game_state = self.game_state),
+                        Button(pos=(HALF_WIDTH, HALF_HEIGHT + 100), text_input="Quit",
+                            font=self.smallFont,
+                            base_color=black, hovering_color=taxi_blue, background_color=white,
+                            border_color=yellow, game_state = self.game_state)]
+        self.menu_image = pygame.image.load("Logo.png") 
+        self.menu_image = pygame.transform.smoothscale(self.menu_image, (200, 200))
+        self.menu_image_rect = self.menu_image.get_rect(center=(HALF_WIDTH, 150))
 
-# Set up display
-width, height = 800, 600
-screen = pygame.display.set_mode((width, height))
-pygame.display.set_caption("AI Car Driving")
+    def update(self):
+        for button in self.buttons:
+            button.update()
 
-# Set up fonts
-font = pygame.font.Font(None, 36)
+    def render_frame(self):
+        self.game_state.screen.fill(grey)
+        self.game_state.screen.blit(self.menu_image, self.menu_image_rect)
+        for button in self.buttons:
+            button.render()
 
-# Define colors
-white = (255, 255, 255)
-black = (0, 0, 0)
-red = (255, 0, 0)
-
-menu_image = pygame.image.load("Logo.png") 
-menu_image = pygame.transform.scale(menu_image, (200, 200))  
-
-# Define menu options
-menu_options = [
-    "Train AI Car",
-    "Exit"
-]
-
-# Function to display the menu
-def display_menu(selected_option):
-    screen.fill(white)
-    screen.blit(menu_image, ((width - 200) // 2, 50))
-    for i, option in enumerate(menu_options):
-        text = font.render(option, True, red if i == selected_option else black)
-        text_rect = text.get_rect(center=(width // 2, height // 2 + i * 50))
-        pygame.draw.rect(screen, black, text_rect, 2)
-        screen.blit(text, text_rect)
-
-# Main game loop
-selected_option = 0
-while True:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_DOWN:
-                selected_option = (selected_option + 1) % len(menu_options)
-            elif event.key == pygame.K_UP:
-                selected_option = (selected_option - 1) % len(menu_options)
-            elif event.key == pygame.K_RETURN:
-                if selected_option == 0:
-                    subprocess.Popen(["python", "newCarTraining.py"]) 
-                elif selected_option == 1:
-                    pygame.quit()
-                    sys.exit()
-
-    display_menu(selected_option)
-    pygame.display.flip()
+    def process_input(self):
+        pass
