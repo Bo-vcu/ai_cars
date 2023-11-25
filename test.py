@@ -59,6 +59,7 @@ async def send_to_taxi_driver(text):
     )
     return completion.choices[0].message
 
+
 class Car:
 
     def __init__(self):
@@ -107,9 +108,9 @@ class Car:
             if (
                 0 <= x < game_map.get_width()
                 and 0 <= y < game_map.get_height()
-                and game_map.get_at((x, y)) == BORDER_COLOR
+                and not game_map.get_at((x, y)) == BORDER_COLOR
             ):
-                self.alive = False  
+                self.alive = False
                 break
 
     def check_radar(self, degree, game_map):
@@ -210,6 +211,7 @@ class Car:
 
 
 async def drive_with_trained_network(network, config):
+
     global endPos
     global GameState
 
@@ -229,6 +231,7 @@ async def drive_with_trained_network(network, config):
 
     current_text = ""
     response = ""
+
 
     while True:
         for event in pygame.event.get():
@@ -314,6 +317,3 @@ async def drive_with_trained_network(network, config):
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-
-
