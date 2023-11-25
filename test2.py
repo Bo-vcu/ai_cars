@@ -19,10 +19,9 @@ BORDER_COLOR = (255, 255, 255, 255) # Color To Crash on Hit
 current_generation = 0 # Generation counter
 
 
-endPos = [400, 700]
-
-
-GameState = 0
+indexEndPos = 0
+training_endPos = [ [1200 , 200], [1200 , 500], [200 , 250], [400, 600], [1350 , 150]]
+endPos = training_endPos[0]
 
 
 
@@ -66,7 +65,6 @@ class Car:
             pygame.draw.circle(screen, (0, 255, 0), position, 5)
 
     def check_collision(self, game_map):
-        self.alive = True
         for point in self.corners:
             # If Any Corner Touches Border Color -> Crash
             # Assumes Rectangle
@@ -78,7 +76,7 @@ class Car:
                 and 0 <= y < game_map.get_height()
                 and not game_map.get_at((x, y)) == BORDER_COLOR
             ):
-                self.alive = False
+                #self.alive = False
                 break
 
     def check_radar(self, degree, game_map):
@@ -107,6 +105,10 @@ class Car:
         if not self.speed_set:
             self.speed = 10
             self.speed_set = True
+
+        if self.time > 350:
+
+            self.alive=False
 
         x = math.pow(self.center[0]-endPos[0],2)
         y = math.pow(self.center[1]-endPos[1],2)
@@ -186,7 +188,8 @@ class Car:
 
 def drive_with_trained_network(network, config):
     global endPos
-    global GameState
+    global indexEndPos
+    global training_endPos
 
 
     endPointImage = pygame.image.load('endpoint.png')
@@ -204,49 +207,44 @@ def drive_with_trained_network(network, config):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit(0)
-            if event.type == pygame.MOUSEBUTTONUP:
-                if GameState == 0:
-                    endPos = [event.pos[0], event.pos[1]]
-                    GameState = 3
-                    car.position = [600, 300]
-                    car.reached = False
-                    car.speed_set = False
-            if event.type == pygame.KEYUP:
-                if event.key == pygame.K_r:
-                    if GameState == 3:
-                        GameState = 0
+
+
 
         screen.fill((0,0,0)) 
-        if GameState == 0:
 
-            text = generation_font.render("Select a point on the map", True, (255, 0, 0))
-            text_rect = text.get_rect()
-            text_rect.center = (900, 900)
-            screen.blit(text, text_rect)
-            screen.blit(game_map, (0, 0))
-        elif GameState == 3:
 
-            output = network.activate(car.get_data())  # Get the network's output
-            choice = output.index(max(output))
+        output = network.activate(car.get_data())  # Get the network's output
+        choice = output.index(max(output))
 
-            # Update the car based on the network's output (same logic as in the learning part)
-            if choice == 0:
-                car.angle += 10  # Left
-            elif choice == 1:
-                car.angle -= 10  # Right
-            elif choice == 2:
-                pass
+        # Update the car based on the network's output (same logic as in the learning part)
+        if choice == 0:
+            car.angle += 10  # Left
+        elif choice == 1:
+            car.angle -= 10  # Right
+        elif choice == 2:
+            pass
 
-            car.update(game_map)
+        car.update(game_map)
 
-            screen.blit(game_map, (0, 0))
-            screen.blit(endPointImage, endPos)
-            car.draw(screen)
 
-            text = generation_font.render("Press (R) to choose another point on the map", True, (255, 0, 0))
-            text_rect = text.get_rect()
-            text_rect.center = (900, 900)
-            screen.blit(text, text_rect)
+        if car.reached or not(car.is_alive()):
+            car = Car()
+            if indexEndPos >= len(training_endPos):
+                indexEndPos = 0
+
+            
+            endPos = training_endPos[indexEndPos]
+            indexEndPos += 1
+            
+
+        screen.blit(game_map, (0, 0))
+        screen.blit(endPointImage, endPos)
+        car.draw(screen)
+
+        text = generation_font.render("Press (R) to choose another point on the map", True, (255, 0, 0))
+        text_rect = text.get_rect()
+        text_rect.center = (900, 900)
+        screen.blit(text, text_rect)
 
 
         pygame.display.flip()
@@ -256,11 +254,16 @@ if __name__ == "__main__":
 
     import pickle
     # Load the best genome and network
-    with open("neat_best_genome.pkl", 'rb') as input_file:
+    with open("goodgenome.pkl", 'rb') as input_file:
         best_genome = pickle.load(input_file)
 
-    with open("neat_best_network.pkl", 'rb') as input_file:
+    with open("goodgenome_network.pkl", 'rb') as input_file:
         best_network = pickle.load(input_file)
 
+    # with open("neat_best_genome.pkl", 'rb') as input_file:
+    #     best_genome = pickle.load(input_file)
+
+    # with open("neat_best_network.pkl", 'rb') as input_file:
+    #     best_network = pickle.load(input_file)
 
     drive_with_trained_network(best_network, best_genome)
