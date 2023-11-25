@@ -29,7 +29,7 @@ current_generation = 0 # Generation counter
 
 
 indexEndPos = 0
-training_endPos = [ [1271, 85],[1190, 615],[435, 570],[97, 37] ]
+training_endPos = [ [1271, 85],[1190, 615],[435, 570],[655, 246] ]
 endPos = training_endPos[0]
 # endPos = [400, 700]
 endPointImage = pygame.image.load('endpoint.png')
@@ -44,8 +44,8 @@ class Car:
         self.rotated_sprite = self.sprite 
 
         # self.position = [690, 740] # Starting Position
-        self.position = [655, 246] # Starting Position
-        self.angle = 180
+        self.position = [97, 37] # Starting Position
+        self.angle = 0
         # self.angle = random.randint(0, 359)
 
         self.speed = SPEED
@@ -356,7 +356,7 @@ if __name__ == "__main__":
     population.add_reporter(stats)
     
     # Run Simulation For A Maximum of 1000 Generations
-    population.run(run_simulation, 250)
+    population.run(run_simulation, 80)
 
     print('done')
     
