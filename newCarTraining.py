@@ -29,7 +29,7 @@ current_generation = 0 # Generation counter
 
 
 indexEndPos = 0
-training_endPos = [ [1190, 615],[435, 570],[655, 246], [1271, 85] ]
+training_endPos = [ [1200 , 200], [1200 , 500], [200 , 250], [400, 600], [1350 , 150]]
 endPos = training_endPos[0]
 # endPos = [400, 700]
 endPointImage = pygame.image.load('endpoint.png')
@@ -39,12 +39,12 @@ class Car:
 
     def __init__(self):
         # Load Car Sprite and Rotate
-        self.sprite = pygame.image.load('new_taxi.jpg').convert() # Convert Speeds Up A Lot
+        self.sprite = pygame.image.load('taxi_zonder_bg.png').convert() # Convert Speeds Up A Lot
         self.sprite = pygame.transform.scale(self.sprite, (CAR_SIZE_X, CAR_SIZE_Y))
         self.rotated_sprite = self.sprite 
 
         # self.position = [690, 740] # Starting Position
-        self.position = [97, 37] # Starting Position
+        self.position = [600, 300] # Starting Position
         self.angle = 15
         # self.angle = random.randint(0, 359)
 
@@ -200,16 +200,16 @@ class Car:
         distance_reward = self.distance / (CAR_SIZE_X / 2)
 
         # Set weights for the two reward functions
-        weight_progress_reward = 0.8  # Adjust this weight based on the importance of progress_reward
-        weight_distance_reward = 0.2  # Adjust this weight based on the importance of distance_reward
+        weight_progress_reward = 1  # Adjust this weight based on the importance of progress_reward
+        weight_distance_reward = 0  # Adjust this weight based on the importance of distance_reward
 
         x = math.pow(self.center[0]-endPos[0],2)
         y = math.pow(self.center[1]-endPos[1],2)
        
         # Combine the rewards
         total_reward = weight_progress_reward * progress_reward + weight_distance_reward * distance_reward
-        if(math.sqrt(x + y) <= 50):
-            total_reward*=2
+        # if(math.sqrt(x + y) <= 50):
+        #     total_reward*=1.2
         return total_reward
     
     
@@ -256,7 +256,7 @@ def run_simulation(genomes, config):
     clock = pygame.time.Clock()
     generation_font = pygame.font.SysFont("Arial", 30)
     alive_font = pygame.font.SysFont("Arial", 20)
-    game_map = pygame.image.load('mastapiece.png').convert() # Convert Speeds Up A Lot
+    game_map = pygame.image.load('newCity.png').convert() # Convert Speeds Up A Lot
 
     global current_generation
     current_generation += 1
@@ -327,12 +327,12 @@ def run_simulation(genomes, config):
         # Display Info
         text = generation_font.render("Generation: " + str(current_generation), True, (0,0,0))
         text_rect = text.get_rect()
-        text_rect.center = (800, 510)
+        text_rect.center = (700, 510)
         screen.blit(text, text_rect)
 
         text = alive_font.render("Still Alive: " + str(still_alive), True, (0, 0, 0))
         text_rect = text.get_rect()
-        text_rect.center = (800, 490)
+        text_rect.center = (700, 490)
         screen.blit(text, text_rect)
         screen.blit(endPointImage, endPos)
         pygame.display.flip()
