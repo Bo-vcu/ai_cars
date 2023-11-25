@@ -29,7 +29,7 @@ current_generation = 0 # Generation counter
 
 
 indexEndPos = 0
-training_endPos = [ [1200 , 200], [1200 , 500], [200 , 250], [400, 600], [1350 , 150]]
+training_endPos = [ [1271, 85],[1190, 615],[435, 570],[97, 37] ]
 endPos = training_endPos[0]
 # endPos = [400, 700]
 endPointImage = pygame.image.load('endpoint.png')
@@ -44,9 +44,9 @@ class Car:
         self.rotated_sprite = self.sprite 
 
         # self.position = [690, 740] # Starting Position
-        self.position = [600, 300] # Starting Position
-        # self.angle = 0
-        self.angle = random.randint(0, 359)
+        self.position = [655, 246] # Starting Position
+        self.angle = 180
+        # self.angle = random.randint(0, 359)
 
         self.speed = SPEED
 
@@ -245,7 +245,7 @@ def run_simulation(genomes, config):
     clock = pygame.time.Clock()
     generation_font = pygame.font.SysFont("Arial", 30)
     alive_font = pygame.font.SysFont("Arial", 20)
-    game_map = pygame.image.load('newCity.png').convert() # Convert Speeds Up A Lot
+    game_map = pygame.image.load('mastapiece.png').convert() # Convert Speeds Up A Lot
 
     global current_generation
     current_generation += 1
@@ -316,12 +316,12 @@ def run_simulation(genomes, config):
         # Display Info
         text = generation_font.render("Generation: " + str(current_generation), True, (0,0,0))
         text_rect = text.get_rect()
-        text_rect.center = (900, 900)
+        text_rect.center = (800, 510)
         screen.blit(text, text_rect)
 
         text = alive_font.render("Still Alive: " + str(still_alive), True, (0, 0, 0))
         text_rect = text.get_rect()
-        text_rect.center = (900, 490)
+        text_rect.center = (800, 490)
         screen.blit(text, text_rect)
         screen.blit(endPointImage, endPos)
         pygame.display.flip()
@@ -329,15 +329,15 @@ def run_simulation(genomes, config):
 
     #plotting
     
-    # avg_fitness = sum(g[1].fitness for g in genomes) / len(genomes)
-    # avg_fitness_history.append(avg_fitness)
-    # plt.ion()  # Turn on interactive mode
-    # plt.plot(range(1, len(avg_fitness_history) + 1), avg_fitness_history)  # Start x-axis from 1
-    # plt.xlabel('Generation')
-    # plt.ylabel('Average fitness')
-    # plt.title('Reward History')
-    # plt.draw()  # Draw the plot
-    # plt.pause(0.001)  # Add a small pause to give the plot time to update 
+    avg_fitness = sum(g[1].fitness for g in genomes) / len(genomes)
+    avg_fitness_history.append(avg_fitness)
+    plt.ion()  # Turn on interactive mode
+    plt.plot(range(1, len(avg_fitness_history) + 1), avg_fitness_history)  # Start x-axis from 1
+    plt.xlabel('Generation')
+    plt.ylabel('Average fitness')
+    plt.title('Reward History')
+    plt.draw()  # Draw the plot
+    plt.pause(0.001)  # Add a small pause to give the plot time to update 
 
 if __name__ == "__main__":
     
