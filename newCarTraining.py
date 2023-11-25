@@ -329,15 +329,15 @@ def run_simulation(genomes, config):
 
     #plotting
     
-    avg_fitness = sum(g[1].fitness for g in genomes) / len(genomes)
-    avg_fitness_history.append(avg_fitness)
-    plt.ion()  # Turn on interactive mode
-    plt.plot(range(1, len(avg_fitness_history) + 1), avg_fitness_history)  # Start x-axis from 1
-    plt.xlabel('Generation')
-    plt.ylabel('Average fitness')
-    plt.title('Reward History')
-    plt.draw()  # Draw the plot
-    plt.pause(0.001)  # Add a small pause to give the plot time to update 
+    # avg_fitness = sum(g[1].fitness for g in genomes) / len(genomes)
+    # avg_fitness_history.append(avg_fitness)
+    # plt.ion()  # Turn on interactive mode
+    # plt.plot(range(1, len(avg_fitness_history) + 1), avg_fitness_history)  # Start x-axis from 1
+    # plt.xlabel('Generation')
+    # plt.ylabel('Average fitness')
+    # plt.title('Reward History')
+    # plt.draw()  # Draw the plot
+    # plt.pause(0.001)  # Add a small pause to give the plot time to update 
 
 if __name__ == "__main__":
     
@@ -356,7 +356,7 @@ if __name__ == "__main__":
     population.add_reporter(stats)
     
     # Run Simulation For A Maximum of 1000 Generations
-    population.run(run_simulation, 20000)
+    population.run(run_simulation, 250)
 
     print('done')
     

@@ -18,6 +18,14 @@ BORDER_COLOR = (255, 255, 255, 255) # Color To Crash on Hit
 
 current_generation = 0 # Generation counter
 
+
+endPos = [400, 700]
+
+
+GameState = 0
+
+
+
 class Car:
 
     def __init__(self):
@@ -28,7 +36,7 @@ class Car:
 
         # self.position = [690, 740] # Starting Position
         # self.position = [830, 920] # Starting Position
-        self.position = [1500, 800] # Starting Position
+        self.position = [600, 300] # Starting Position
         self.angle = 0
         self.speed = 0
 
@@ -60,7 +68,14 @@ class Car:
         for point in self.corners:
             # If Any Corner Touches Border Color -> Crash
             # Assumes Rectangle
-            if game_map.get_at((int(point[0]), int(point[1]))) == BORDER_COLOR:
+            x = int(point[0])
+            y = int(point[1])
+            
+            if (
+                0 <= x < game_map.get_width()
+                and 0 <= y < game_map.get_height()
+                and not game_map.get_at((x, y)) == BORDER_COLOR
+            ):
                 self.alive = False
                 break
 
@@ -76,7 +91,6 @@ class Car:
             and not game_map.get_at((x, y)) == BORDER_COLOR
             and length < 300
         ):
-        # while not game_map.get_at((x, y)) == BORDER_COLOR and length < 300:
             length = length + 1
             x = int(self.center[0] + math.cos(math.radians(360 - (self.angle + degree))) * length)
             y = int(self.center[1] + math.sin(math.radians(360 - (self.angle + degree))) * length)
@@ -129,9 +143,19 @@ class Car:
             self.check_radar(d, game_map)
 
     def get_data(self):
+
+        
+        x = self.center[0]-endPos[0]
+        y = self.center[1]-endPos[1]
+
+        angle_to_endpoint = math.atan2(y,x) * (180/math.pi) -180
+
         # Get Distances To Border
         radars = self.radars
-        return_values = [0, 0, 0, 0, 0]
+        return_values = [0, 0, 0, 0, 0, self.center[0], self.center[1], self.angle, angle_to_endpoint]
+        # print(return_values)
+
+
         for i, radar in enumerate(radars):
             return_values[i] = int(radar[1] / 30)
 
@@ -141,10 +165,6 @@ class Car:
         # Basic Alive Function
         return self.alive
 
-    def get_reward(self):
-        # Calculate Reward (Maybe Change?)
-        # return self.distance / 50.0
-        return self.distance / (CAR_SIZE_X / 2)
 
     def rotate_center(self, image, angle):
         # Rotate The Rectangle
@@ -157,37 +177,67 @@ class Car:
 
 
 def drive_with_trained_network(network, config):
+    global endPos
+    global GameState
+
+
+    endPointImage = pygame.image.load('endpoint.png')
+
     # Initialize PyGame and the Display
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     clock = pygame.time.Clock()
-    game_map = pygame.image.load('city.png').convert()
+    game_map = pygame.image.load('newCity.png').convert()
 
     car = Car()  # Create a single car instance
+    generation_font = pygame.font.SysFont("Arial", 30)  
 
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit(0)
+            if event.type == pygame.MOUSEBUTTONUP:
+                if GameState == 0:
+                    endPos = [event.pos[0], event.pos[1]]
+                    GameState = 3
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_r:
+                    if GameState == 3:
+                        GameState = 0
 
-        output = network.activate(car.get_data())  # Get the network's output
-        choice = output.index(max(output))
+        screen.fill((0,0,0)) 
+        if GameState == 0:
 
-        # Update the car based on the network's output (same logic as in the learning part)
-        if choice == 0:
-            car.angle += 10
-        elif choice == 1:
-            car.angle -= 10
-        elif choice == 2:
-            if car.speed - 2 >= 12:
-                car.speed -= 2
-        else:
-            car.speed += 2
+            text = generation_font.render("Select a point on the map", True, (255, 0, 0))
+            text_rect = text.get_rect()
+            text_rect.center = (900, 900)
+            screen.blit(text, text_rect)
+            screen.blit(game_map, (0, 0))
+        elif GameState == 3:
 
-        car.update(game_map)  # Update the car
+            output = network.activate(car.get_data())  # Get the network's output
+            choice = output.index(max(output))
 
-        screen.blit(game_map, (0, 0))
-        car.draw(screen)
+            # Update the car based on the network's output (same logic as in the learning part)
+            if choice == 0:
+                car.angle += 10  # Left
+            elif choice == 1:
+                car.angle -= 10  # Right
+            elif choice == 2:
+                pass
+
+            car.update(game_map)
+
+            screen.blit(game_map, (0, 0))
+            screen.blit(endPointImage, endPos)
+            car.draw(screen)
+
+            text = generation_font.render("Press (R) to choose another point on the map", True, (255, 0, 0))
+            text_rect = text.get_rect()
+            text_rect.center = (900, 900)
+            screen.blit(text, text_rect)
+
+
         pygame.display.flip()
         clock.tick(60)
 
@@ -200,5 +250,6 @@ if __name__ == "__main__":
 
     with open("neat_best_network.pkl", 'rb') as input_file:
         best_network = pickle.load(input_file)
+
 
     drive_with_trained_network(best_network, best_genome)
