@@ -14,14 +14,14 @@ import copy
 # Constants
 # WIDTH = 1600
 # HEIGHT = 880
-TIME_TO_DIE = 200
-SPEED = 10
+TIME_TO_DIE = 250
+SPEED = 8
 
 WIDTH = 1536
 HEIGHT = 864
 
-CAR_SIZE_X = 60    
-CAR_SIZE_Y = 60
+CAR_SIZE_X = 50   
+CAR_SIZE_Y = 50
 
 BORDER_COLOR = (255, 255, 255, 255) # Color To Crash on Hit
 
@@ -30,7 +30,8 @@ current_generation = 0 # Generation counter
 
 
 indexEndPos = 0
-training_endPos = [ [1200 , 200], [200 , 250], [400, 600], [600, 300]]
+# training_endPos = [ [1200 , 200], [200 , 250], [400, 600], [600, 300]]
+training_endPos = [ [1271, 85],[1190, 615],[435, 570],[655, 246],[97, 37] ]
 endPos = training_endPos[0]
 # endPos = [400, 700]
 endPointImage = pygame.image.load('endpoint.png')
@@ -123,7 +124,7 @@ class Car:
         x = math.pow(self.center[0]-endPos[0],2)
         y = math.pow(self.center[1]-endPos[1],2)
         # print(endPos)
-        if(math.sqrt(x + y) <= 50):
+        if(math.sqrt(x + y) <= 80):
             self.speed = 0
             self.speed_set = True
             self.reached = True
@@ -200,26 +201,49 @@ class Car:
 
 
     
+    # def get_reward(self):
+        
+    #     total_reward = 0
+
+    #     time_penalty = 0.01  # Adjust this value based on your desired time penalty
+    #     total_reward -= time_penalty * self.time  # Include the elapsed time in your calculations
+
+    #     exploration_reward = random.uniform(0, 0.1)  # Adjust the range based on your preferences
+    #     total_reward += exploration_reward
+
+
+    #     # Calculate Reward based on distance to the endPoint
+    #     distance_to_end_point = math.sqrt((self.center[0] - endPos[0])**2 + (self.center[1] - endPos[1])**2)
+        
+    #     # Exponential decay function to encourage progress
+    #     progress_reward = 1000 * math.exp(-0.01 * distance_to_end_point)
+
+
+    #     # Combine the rewards and penalties
+    #     total_reward = max(0, progress_reward)
+    #     return total_reward
+
     def get_reward(self):
-        
-        total_reward = 0
-
-        time_penalty = 0.01  # Adjust this value based on your desired time penalty
-        total_reward -= time_penalty * self.time  # Include the elapsed time in your calculations
-
-        exploration_reward = random.uniform(0, 0.1)  # Adjust the range based on your preferences
-        total_reward += exploration_reward
 
 
-        # Calculate Reward based on distance to the endPoint
+      # Reward progress toward the endpoint
         distance_to_end_point = math.sqrt((self.center[0] - endPos[0])**2 + (self.center[1] - endPos[1])**2)
-        
-        # Exponential decay function to encourage progress
-        progress_reward = 1000 * math.exp(-0.01 * distance_to_end_point)
+        progress_reward = 1000 - distance_to_end_point
 
+        # Reward for staying alive or covering distance
+        distance_reward = self.distance / (CAR_SIZE_X / 2)
 
-        # Combine the rewards and penalties
-        total_reward = max(0, progress_reward)
+        # Set weights for the two reward functions
+        weight_progress_reward = 0.8  # Adjust this weight based on the importance of progress_reward
+        weight_distance_reward = 0.2  # Adjust this weight based on the importance of distance_reward
+
+        x = math.pow(self.center[0]-endPos[0],2)
+        y = math.pow(self.center[1]-endPos[1],2)
+       
+        # Combine the rewards
+        total_reward = weight_progress_reward * progress_reward + weight_distance_reward * distance_reward
+        if(math.sqrt(x + y) <= 80):
+            total_reward*=2
         return total_reward
     
 
@@ -270,7 +294,7 @@ def run_simulation(genomes, config):
     clock = pygame.time.Clock()
     generation_font = pygame.font.SysFont("Arial", 30)
     alive_font = pygame.font.SysFont("Arial", 20)
-    game_map = pygame.image.load('newCity.png').convert() # Convert Speeds Up A Lot
+    game_map = pygame.image.load('mastapiece.png').convert() # Convert Speeds Up A Lot
 
     current_generation += 1
 
@@ -347,12 +371,12 @@ def run_simulation(genomes, config):
         # Display Info
         text = generation_font.render("Generation: " + str(current_generation), True, (0,0,0))
         text_rect = text.get_rect()
-        text_rect.center = (900, 900)
+        text_rect.center = (800, 520)
         screen.blit(text, text_rect)
 
         text = alive_font.render("Still Alive: " + str(still_alive), True, (0, 0, 0))
         text_rect = text.get_rect()
-        text_rect.center = (900, 490)
+        text_rect.center = (800, 490)
         screen.blit(text, text_rect)
         screen.blit(endPointImage, endPos)
         pygame.display.flip()

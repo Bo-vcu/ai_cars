@@ -187,7 +187,7 @@ def drive_with_trained_network(network, config):
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     clock = pygame.time.Clock()
-    game_map = pygame.image.load('newCity.png').convert()
+    game_map = pygame.image.load('mastapiece.png').convert()
 
     car = Car()  # Create a single car instance
     generation_font = pygame.font.SysFont("Arial", 30)  
