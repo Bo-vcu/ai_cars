@@ -1,33 +1,17 @@
-
 import math
-import random
-import sys
-import os
-
-import neat
+import pickle
 import pygame
-
-
-WIDTH = 1600
-HEIGHT = 880
+from state import State
+from settings import *
 
 CAR_SIZE_X = 60    
 CAR_SIZE_Y = 60
 
 BORDER_COLOR = (255, 255, 255, 255) # Color To Crash on Hit
 
-current_generation = 0 # Generation counter
-
-
-indexEndPos = 0
-training_endPos = [ [1200 , 200], [1200 , 500], [200 , 250], [400, 600], [1350 , 150]]
-endPos = training_endPos[0]
-
-
-
 class Car:
-
-    def __init__(self):
+    def __init__(self, game_state):
+        self.game_state = game_state
         # Load Car Sprite and Rotate
         self.sprite = pygame.image.load('testaxir.png').convert() # Convert Speeds Up A Lot
         self.sprite = pygame.transform.scale(self.sprite, (CAR_SIZE_X, CAR_SIZE_Y))
@@ -110,8 +94,8 @@ class Car:
 
             self.alive=False
 
-        x = math.pow(self.center[0]-endPos[0],2)
-        y = math.pow(self.center[1]-endPos[1],2)
+        x = math.pow(self.center[0]-self.game_state.endPos[0],2)
+        y = math.pow(self.center[1]-self.game_state.endPos[1],2)
         if(math.sqrt(x + y) <= 50):
             self.speed = 0
             self.speed_set = True
@@ -153,10 +137,8 @@ class Car:
             self.check_radar(d, game_map)
 
     def get_data(self):
-
-        
-        x = self.center[0]-endPos[0]
-        y = self.center[1]-endPos[1]
+        x = self.center[0]-self.game_state.endPos[0]
+        y = self.center[1]-self.game_state.endPos[1]
 
         angle_to_endpoint = math.atan2(y,x) * (180/math.pi) -180
 
@@ -185,85 +167,65 @@ class Car:
         rotated_image = rotated_image.subsurface(rotated_rectangle).copy()
         return rotated_image
 
+class Test2(State):
+    def __init__(self, game_state):
+        # Load the best genome and network
+        with open("goodgenome.pkl", 'rb') as input_file:
+            self.best_genome = pickle.load(input_file)
 
-def drive_with_trained_network(network, config):
-    global endPos
-    global indexEndPos
-    global training_endPos
+        with open("goodgenome_network.pkl", 'rb') as input_file:
+            self.best_network = pickle.load(input_file)
 
+        self.endPointImage = pygame.image.load('endpoint.png').convert()
+        self.game_map = pygame.image.load('newCity.png').convert()
 
-    endPointImage = pygame.image.load('endpoint.png')
+        self.car = Car(self)  # Create a single car instance
+        self.generation_font = pygame.font.SysFont("Arial", 30) 
+        self.game_state = game_state
 
-    # Initialize PyGame and the Display
-    pygame.init()
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
-    clock = pygame.time.Clock()
-    game_map = pygame.image.load('newCity.png').convert()
+        self.current_generation = 0 # Generation counter
+        self.indexEndPos = 0
+        self.training_endPos = [ [1200 , 200], [1200 , 500], [200 , 250], [400, 600], [1350 , 150]]
 
-    car = Car()  # Create a single car instance
-    generation_font = pygame.font.SysFont("Arial", 30)  
+        self.endPos = self.training_endPos[0]
 
-    while True:
+    def process_input(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                sys.exit(0)
+                self.game_state.quit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    self.game_state.__setstate_menu__()
 
-
-
-        screen.fill((0,0,0)) 
-
-
-        output = network.activate(car.get_data())  # Get the network's output
+    def update(self):
+        output = self.best_network.activate(self.car.get_data())  # Get the network's output
         choice = output.index(max(output))
 
         # Update the car based on the network's output (same logic as in the learning part)
         if choice == 0:
-            car.angle += 10  # Left
+            self.car.angle += 10  # Left
         elif choice == 1:
-            car.angle -= 10  # Right
+            self.car.angle -= 10  # Right
         elif choice == 2:
             pass
 
-        car.update(game_map)
+        self.car.update(self.game_map)
 
+        if self.car.reached or not(self.car.is_alive()):
+            self.car = Car(self)
+            if self.indexEndPos >= len(self.training_endPos):
+                self.indexEndPos = 0
 
-        if car.reached or not(car.is_alive()):
-            car = Car()
-            if indexEndPos >= len(training_endPos):
-                indexEndPos = 0
+            self.endPos = self.training_endPos[self.indexEndPos]
+            self.indexEndPos += 1
 
-            
-            endPos = training_endPos[indexEndPos]
-            indexEndPos += 1
-            
+    def render_frame(self):
+        self.game_state.screen.fill((0,0,0)) 
+        self.game_state.screen.blit(self.game_map, (0, 0))
+        self.game_state.screen.blit(self.endPointImage, self.endPos)
+        self.car.draw(self.game_state.screen)
 
-        screen.blit(game_map, (0, 0))
-        screen.blit(endPointImage, endPos)
-        car.draw(screen)
-
-        text = generation_font.render("Press (R) to choose another point on the map", True, (255, 0, 0))
+        text = self.generation_font.render("Press (R) to choose another point on the map", True, (255, 0, 0))
         text_rect = text.get_rect()
         text_rect.center = (900, 900)
-        screen.blit(text, text_rect)
-
-
-        pygame.display.flip()
-        clock.tick(60)
-
-if __name__ == "__main__":
-
-    import pickle
-    # Load the best genome and network
-    with open("goodgenome.pkl", 'rb') as input_file:
-        best_genome = pickle.load(input_file)
-
-    with open("goodgenome_network.pkl", 'rb') as input_file:
-        best_network = pickle.load(input_file)
-
-    # with open("neat_best_genome.pkl", 'rb') as input_file:
-    #     best_genome = pickle.load(input_file)
-
-    # with open("neat_best_network.pkl", 'rb') as input_file:
-    #     best_network = pickle.load(input_file)
-
-    drive_with_trained_network(best_network, best_genome)
+        self.game_state.screen.blit(text, text_rect)

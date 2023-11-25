@@ -2,7 +2,8 @@ import pygame
 import sys
 from settings import *
 from menu import Menu
-from game import Game
+from test2 import Test2
+from test import Test1
 
 class Main:
     def __init__(self):
@@ -18,9 +19,12 @@ class Main:
 
     def new_game(self):
         self.state = Menu(self)
+    
+    def __setstate_test1__(self):
+        self.state = Test1(self)
 
-    def __setstate_game__(self):
-        self.state = Game(self)
+    def __setstate_test2__(self):
+        self.state = Test2(self)
     
     def __setstate_menu__(self):
         self.state = Menu(self)
@@ -36,9 +40,6 @@ class Main:
         self.state.render_frame()
 
     def check_events(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                self.quit()
         self.state.process_input()
 
     def quit(self):

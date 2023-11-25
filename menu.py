@@ -20,7 +20,7 @@ class Menu(State):
                                border_width = 2,
                                radius = 12,
                                game_state = self.game_state,
-                               function = self.game_state.__setstate_game__),
+                               function = self.game_state.__setstate_test2__),
                         Button(pos = (HALF_WIDTH, HALF_HEIGHT),
                                text_input = "Pick your own points",
                                font = self.smallFont,
@@ -32,7 +32,7 @@ class Menu(State):
                                border_width = 2,
                                radius = 12,
                                game_state = self.game_state,
-                               function = self.game_state.__setstate_game__),
+                               function = self.game_state.__setstate_test1__),
                         Button(pos = (HALF_WIDTH, HALF_HEIGHT * 1.2314814814814814),  # resposive: + 100px if half screen height is 432px, so 432 + 100 = 532 and 532 / 432 = 1.2314814814814814
                                text_input = "Quit",
                                font = self.smallFont,
@@ -65,6 +65,10 @@ class Menu(State):
             button.render()
 
     def process_input(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.game_state.quit()
+                
         keys = pygame.mouse.get_pressed()
 
         if keys[0]:
