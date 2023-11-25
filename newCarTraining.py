@@ -31,7 +31,10 @@ current_generation = 0 # Generation counter
 
 indexEndPos = 0
 # training_endPos = [ [1200 , 200], [200 , 250], [400, 600], [600, 300]]
-training_endPos = [ [1271, 85],[1190, 615],[435, 570],[655, 246],[97, 37] ]
+#mastapiece
+# training_endPos = [ [1271, 85],[1190, 615],[435, 570],[655, 246],[97, 37] ]
+#driehoek
+training_endPos = [ [76, 80],[645, 602],[1333, 208] ]
 endPos = training_endPos[0]
 # endPos = [400, 700]
 endPointImage = pygame.image.load('endpoint.png')
@@ -294,11 +297,11 @@ def run_simulation(genomes, config):
     clock = pygame.time.Clock()
     generation_font = pygame.font.SysFont("Arial", 30)
     alive_font = pygame.font.SysFont("Arial", 20)
-    game_map = pygame.image.load('mastapiece.png').convert() # Convert Speeds Up A Lot
+    game_map = pygame.image.load('driehoek.png').convert() # Convert Speeds Up A Lot
 
     current_generation += 1
 
-    # Simple Counter To Roughly Limit Time (Not Good Practice)
+    # Simple Counter To Roughly Limit Time 
     counter = 0
 
 

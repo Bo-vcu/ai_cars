@@ -19,7 +19,8 @@ BORDER_COLOR = (255, 255, 255, 255) # Color To Crash on Hit
 current_generation = 0 # Generation counter
 
 
-endPos = [400, 700]
+# endPos = [400, 700]
+startPos = [ [76, 80],[645, 602],[1333, 208] ]
 
 
 GameState = 0
@@ -36,7 +37,7 @@ class Car:
 
         # self.position = [690, 740] # Starting Position
         # self.position = [830, 920] # Starting Position
-        self.position = [600, 300] # Starting Position
+        self.position = [76, 80] # Starting Position
         self.angle = 0
         self.speed = 0
 
