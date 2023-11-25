@@ -1,5 +1,5 @@
 
-# game settings
+# game variables
 RES = WIDTH, HEIGHT = 800, 800
 HALF_WIDTH = WIDTH // 2
 HALF_HEIGHT = HEIGHT // 2

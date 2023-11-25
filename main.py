@@ -2,20 +2,27 @@ import pygame
 import sys
 from settings import *
 from menu import Menu
+from game import Game
 
-class Game:
+class Main:
     def __init__(self):
         pygame.init()
         self.screen = pygame.display.set_mode(RES)
         self.clock = pygame.time.Clock()
         self.delta_time = 1
-        self.state = Menu(self)
         self.mouse_pos = pygame.mouse.get_pos()
+        self.new_game()
 
     def __setstate__(self, state):
         self.state = state
 
     def new_game(self):
+        self.state = Menu(self)
+
+    def __setstate_game__(self):
+        self.state = Game(self)
+    
+    def __setstate_menu__(self):
         self.state = Menu(self)
 
     def update(self):
@@ -31,9 +38,12 @@ class Game:
     def check_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
+                self.quit()
         self.state.process_input()
+
+    def quit(self):
+        pygame.quit()
+        sys.exit()
 
     def run(self):
         while True:
@@ -43,5 +53,5 @@ class Game:
 
 
 if __name__ == '__main__':
-    game = Game()
+    game = Main()
     game.run()
