@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 
 import neat
 import pygame
+import pickle
+
 
 # Constants
 # WIDTH = 1600
@@ -242,7 +244,7 @@ def run_simulation(genomes, config):
     global current_generation
     current_generation += 1
 
-    # Simple Counter To Roughly Limit Time (Not Good Practice)
+    # Simple Counter To Roughly Limit Time 
     counter = 0
 
 
@@ -348,8 +350,7 @@ if __name__ == "__main__":
     best_genome = stats.best_genome()
     best_network = neat.nn.FeedForwardNetwork.create(best_genome, config)
 
-    import pickle
-
+   
     # Save the best network and genome separately
     with open("neat_best_genome.pkl", 'wb') as output_file:
         pickle.dump(best_genome, output_file)
