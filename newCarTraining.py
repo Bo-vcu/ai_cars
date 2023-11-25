@@ -203,7 +203,7 @@ class Car:
     def get_reward(self):
         
         total_reward = 0
-        
+
         time_penalty = 0.01  # Adjust this value based on your desired time penalty
         total_reward -= time_penalty * self.time  # Include the elapsed time in your calculations
 
@@ -214,8 +214,9 @@ class Car:
         # Calculate Reward based on distance to the endPoint
         distance_to_end_point = math.sqrt((self.center[0] - endPos[0])**2 + (self.center[1] - endPos[1])**2)
         
-        # Reward progress toward the endpoint
-        progress_reward = 1000 - distance_to_end_point
+        # Exponential decay function to encourage progress
+        progress_reward = 1000 * math.exp(-0.01 * distance_to_end_point)
+
 
         # Combine the rewards and penalties
         total_reward = max(0, progress_reward)
