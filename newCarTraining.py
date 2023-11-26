@@ -5,7 +5,6 @@ import math
 import random
 import sys
 import os
-from matplotlib import pyplot as plt
 
 import neat
 import pygame
@@ -16,8 +15,8 @@ import pygame
 TIME_TO_DIE = 200
 SPEED = 10
 
-WIDTH = 1536
-HEIGHT = 864
+WIDTH = 1600
+HEIGHT = 880
 
 CAR_SIZE_X = 60    
 CAR_SIZE_Y = 60
@@ -27,8 +26,6 @@ BORDER_COLOR = (255, 255, 255, 255) # Color To Crash on Hit
 current_generation = 0 # Generation counter
 
 
-goodGenome = None
-goodGenome_network = None
 
 indexEndPos = 0
 training_endPos = [ [1200 , 200], [1200 , 500], [200 , 250], [400, 600], [1350 , 150]]
@@ -65,6 +62,10 @@ class Car:
         self.time = 0 # Time Passed
         self.reached = False
 
+
+        #NEW
+        self.lastPos = self.position
+        self.lastCheck = 0
 
     def draw(self, screen):
         screen.blit(self.rotated_sprite, self.position) # Draw Sprite
@@ -210,23 +211,19 @@ class Car:
         rotated_image = rotated_image.subsurface(rotated_rectangle).copy()
         return rotated_image
 
-avg_fitness_history = []
+
 def run_simulation(genomes, config):
     global indexEndPos
     global training_endPos
     global WIDTH
     global HEIGHT
-    global goodGenome
-    global goodGenome_network
-    
- 
+
+
     
 
     # Empty Collections For Nets and Cars
     nets = []
     cars = []
-    reachCounts = []
-    reachDone = []
 
     # Initialize PyGame And The Display
     pygame.init()
@@ -241,10 +238,7 @@ def run_simulation(genomes, config):
         g.fitness = 0
 
         cars.append(Car())
-        reachCounts.append(0)
-        reachDone.append(False)
-    if goodGenome:
-        return
+
     # Clock Settings
     # Font Settings & Loading Map
     clock = pygame.time.Clock()
@@ -289,24 +283,12 @@ def run_simulation(genomes, config):
             if car.is_alive():
                 still_alive += 1
                 car.update(game_map)
-                genomes[i][1].fitness += car.get_reward()
+            genomes[i][1].fitness += car.get_reward()
                 #print('g',i, ' : ' ,genomes[i][1].fitness)
-            else:
-                genomes[i][1].fitness += car.get_reward() * 0.95
-            if car.reached and not(reachDone[i]):
-                reachCounts[i] += 1
-                reachDone[i] = True
 
-            if reachCounts[i] >= 3:
-                print('found')
-                goodGenome = genomes[i]
-                goodGenome_network = nets[i]
 
         if still_alive == 0:
             
-            for i, car in enumerate(cars):
-                reachDone[i] = False
-
             if indexEndPos >= len(training_endPos):
                 break
             global endPos
@@ -344,18 +326,6 @@ def run_simulation(genomes, config):
         pygame.display.flip()
         clock.tick(60) # 60 FPS
 
-    #plotting
-    
-    # avg_fitness = sum(g[1].fitness for g in genomes) / len(genomes)
-    # avg_fitness_history.append(avg_fitness)
-    # plt.ion()  # Turn on interactive mode
-    # plt.plot(range(1, len(avg_fitness_history) + 1), avg_fitness_history)  # Start x-axis from 1
-    # plt.xlabel('Generation')
-    # plt.ylabel('Average fitness')
-    # plt.title('Reward History')
-    # plt.draw()  # Draw the plot
-    # plt.pause(0.001)  # Add a small pause to give the plot time to update 
-
 if __name__ == "__main__":
     
     # Load Config
@@ -373,7 +343,7 @@ if __name__ == "__main__":
     population.add_reporter(stats)
     
     # Run Simulation For A Maximum of 1000 Generations
-    population.run(run_simulation, 2000)
+    population.run(run_simulation, 20000)
 
     print('done')
     
@@ -388,13 +358,3 @@ if __name__ == "__main__":
 
     with open("neat_best_network.pkl", 'wb') as output_file:
         pickle.dump(best_network, output_file)
-
-
-
-    # Save the best network and genome separately
-    with open("goodgenome.pkl", 'wb') as output_file:
-        pickle.dump(goodGenome, output_file)
-
-
-    with open("goodgenome_network.pkl", 'wb') as output_file:
-        pickle.dump(goodGenome_network, output_file)
